@@ -1,0 +1,29 @@
+package postings
+
+import (
+	"github.com/k-yomo/ostrich/directory"
+	"github.com/k-yomo/ostrich/index"
+	"github.com/k-yomo/ostrich/schema"
+)
+
+type InvertedIndexSerializer struct {
+	termsWrite    directory.WriteCloseFlasher
+	postingsWrite directory.WriteCloseFlasher
+	schema        *schema.Schema
+}
+
+func NewInvertedIndexSerializer(segment *index.Segment) (*InvertedIndexSerializer, error) {
+	termsWrite, err := segment.OpenWrite(index.SegmentComponentTerms)
+	if err != nil {
+		return nil, err
+	}
+	postingsWrite, err := segment.OpenWrite(index.SegmentComponentPostings)
+	if err != nil {
+		return nil, err
+	}
+	return &InvertedIndexSerializer{
+		termsWrite:    termsWrite,
+		postingsWrite: postingsWrite,
+		schema:        segment.Schema(),
+	}, nil
+}
