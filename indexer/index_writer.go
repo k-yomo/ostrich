@@ -45,7 +45,7 @@ func NewIndexWriter(idx *index.Index, overallHeapBytes int) (*IndexWriter, error
 
 	indexMeta, err := idx.LoadMetas()
 	if err != nil {
-		return nil, fmt.Errorf("load metas: %v", err)
+		return nil, fmt.Errorf("load metas: %w", err)
 	}
 
 	currentOpstamp := indexMeta.Opstamp

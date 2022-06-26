@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"io/fs"
 	"sync"
 )
 
@@ -37,12 +38,12 @@ func (m *memoryDirectory) AtomicRead(path string) ([]byte, error) {
 
 	b, ok := m.pathBytesMap[path]
 	if !ok {
-		return nil, fmt.Errorf("path '%s' does not exist", path)
+		return nil, fs.ErrNotExist
 	}
 	return b, nil
 }
 
-func (m *memoryDirectory) OpenWrite(path string) (WriteCloseFlasher, error) {
+func (m *memoryDirectory) OpenWrite(path string) (WriteCloseSyncer, error) {
 	b, ok := m.pathBytesMap[path]
 	if !ok {
 		b = []byte{}
@@ -94,7 +95,7 @@ func (m *memoryIO) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
-func (m *memoryIO) Flush() error {
+func (m *memoryIO) Sync() error {
 	return nil
 }
 

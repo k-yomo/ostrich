@@ -2,8 +2,9 @@ package directory
 
 import (
 	"encoding/json"
+	"errors"
 	"io"
-	"os"
+	"io/fs"
 	"strings"
 	"sync"
 )
@@ -44,7 +45,7 @@ func (m *MetaInformation) RemovePath(path string) {
 
 func NewManagedDirectory(dir Directory) (*ManagedDirectory, error) {
 	bytes, err := dir.AtomicRead(managedFilePath)
-	if os.IsNotExist(err) {
+	if errors.Is(err, fs.ErrNotExist) {
 		return &ManagedDirectory{
 			directory:       dir,
 			MetaInformation: &MetaInformation{},
@@ -72,7 +73,7 @@ func (m *ManagedDirectory) Read(path string) (io.ReadCloser, error) {
 func (m *ManagedDirectory) AtomicRead(path string) ([]byte, error) {
 	return m.directory.AtomicRead(path)
 }
-func (m *ManagedDirectory) OpenWrite(path string) (WriteCloseFlasher, error) {
+func (m *ManagedDirectory) OpenWrite(path string) (WriteCloseSyncer, error) {
 	if err := m.registerFileAsManaged(path); err != nil {
 		return nil, err
 	}

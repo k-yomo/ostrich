@@ -29,18 +29,18 @@ func NewMMapDirectory(rootPath string) (*mmapDirectory, error) {
 func (m *mmapDirectory) Read(path string) (io.ReadCloser, error) {
 	f, err := os.Open(m.buildPath(path))
 	if err != nil {
-		return nil, fmt.Errorf("open file: %v", err)
+		return nil, fmt.Errorf("open file: %w", err)
 	}
 	mem, err := mmap.Map(f, mmap.RDWR, 0)
 	if err != nil {
-		return nil, fmt.Errorf("mmap file: %v", err)
+		return nil, fmt.Errorf("mmap file: %w", err)
 	}
 	return newMmapIO(mem, m.buildPath(path)), nil
 }
 func (m *mmapDirectory) AtomicRead(path string) ([]byte, error) {
 	f, err := os.Open(m.buildPath(path))
 	if err != nil {
-		return nil, fmt.Errorf("open file: %v", err)
+		return nil, fmt.Errorf("open file: %w", err)
 	}
 	defer f.Close()
 
@@ -51,31 +51,16 @@ func (m *mmapDirectory) AtomicRead(path string) ([]byte, error) {
 	return bytes, nil
 }
 
-func (m *mmapDirectory) OpenWrite(path string) (WriteCloseFlasher, error) {
+func (m *mmapDirectory) OpenWrite(path string) (WriteCloseSyncer, error) {
 	f, err := os.OpenFile(m.buildPath(path), os.O_RDWR|os.O_CREATE, 0766)
 	if err != nil {
 		return nil, err
 	}
-	// Empty file causes mmap error
-	if stat, err := f.Stat(); err != nil {
-		return nil, err
-	} else {
-		if stat.Size() == 0 {
-			if _, err := f.WriteString("\n"); err != nil {
-				return nil, err
-			}
-		}
-	}
-	mem, err := mmap.Map(f, mmap.RDWR, 0)
-	if err != nil {
-		return nil, err
-	}
-
-	return newMmapIO(mem, m.buildPath(path)), nil
+	return f, err
 }
 
 func (m *mmapDirectory) AtomicWrite(path string, data []byte) error {
-	f, err := os.OpenFile(m.buildPath(path), os.O_RDWR|os.O_CREATE, 0766)
+	f, err := os.Create(m.buildPath(path))
 	if err != nil {
 		return err
 	}
@@ -122,7 +107,7 @@ func (m *mmapIO) Write(p []byte) (n int, err error) {
 	return f.Write(p)
 }
 
-func (m *mmapIO) Flush() error {
+func (m *mmapIO) Sync() error {
 	return m.mmap.Flush()
 }
 

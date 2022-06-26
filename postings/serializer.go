@@ -7,8 +7,8 @@ import (
 )
 
 type InvertedIndexSerializer struct {
-	termsWrite    directory.WriteCloseFlasher
-	postingsWrite directory.WriteCloseFlasher
+	termsWrite    directory.WriteCloseSyncer
+	postingsWrite directory.WriteCloseSyncer
 	schema        *schema.Schema
 }
 

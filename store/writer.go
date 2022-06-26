@@ -11,10 +11,10 @@ const BlockSize = 16_384
 
 type StoreWriter struct {
 	doc    int
-	writer directory.WriteCloseFlasher
+	writer directory.WriteCloseSyncer
 }
 
-func NewStoreWriter(writer directory.WriteCloseFlasher) *StoreWriter {
+func NewStoreWriter(writer directory.WriteCloseSyncer) *StoreWriter {
 	return &StoreWriter{
 		writer: writer,
 	}
