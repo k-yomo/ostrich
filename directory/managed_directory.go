@@ -3,7 +3,6 @@ package directory
 import (
 	"encoding/json"
 	"errors"
-	"io"
 	"io/fs"
 	"strings"
 	"sync"
@@ -67,8 +66,8 @@ func NewManagedDirectory(dir Directory) (*ManagedDirectory, error) {
 	}, nil
 }
 
-func (m *ManagedDirectory) Read(path string) (io.ReadCloser, error) {
-	return m.directory.Read(path)
+func (m *ManagedDirectory) OpenRead(path string) (ReaderCloser, error) {
+	return m.directory.OpenRead(path)
 }
 func (m *ManagedDirectory) AtomicRead(path string) ([]byte, error) {
 	return m.directory.AtomicRead(path)

@@ -9,6 +9,8 @@ import (
 	"github.com/edsrzf/mmap-go"
 )
 
+var _ Directory = &mmapDirectory{}
+
 type mmapDirectory struct {
 	rootPath string
 }
@@ -26,6 +28,18 @@ func NewMMapDirectory(rootPath string) (*mmapDirectory, error) {
 	}, nil
 }
 
+func (m *mmapDirectory) OpenRead(path string) (ReaderCloser, error) {
+	f, err := os.Open(m.buildPath(path))
+	if err != nil {
+		return nil, fmt.Errorf("open file: %w", err)
+	}
+	mem, err := mmap.Map(f, mmap.RDWR, 0)
+	if err != nil {
+		return nil, fmt.Errorf("mmap file: %w", err)
+	}
+	return newMmapIO(mem), nil
+}
+
 func (m *mmapDirectory) Read(path string) (io.ReadCloser, error) {
 	f, err := os.Open(m.buildPath(path))
 	if err != nil {
@@ -35,7 +49,7 @@ func (m *mmapDirectory) Read(path string) (io.ReadCloser, error) {
 	if err != nil {
 		return nil, fmt.Errorf("mmap file: %w", err)
 	}
-	return newMmapIO(mem, m.buildPath(path)), nil
+	return newMmapIO(mem), nil
 }
 func (m *mmapDirectory) AtomicRead(path string) ([]byte, error) {
 	f, err := os.Open(m.buildPath(path))
@@ -84,31 +98,15 @@ func (m *mmapDirectory) buildPath(path string) string {
 }
 
 type mmapIO struct {
+	*bytes.Reader
 	mmap mmap.MMap
-	path string
 }
 
-func newMmapIO(m mmap.MMap, path string) *mmapIO {
+func newMmapIO(m mmap.MMap) *mmapIO {
 	return &mmapIO{
-		mmap: m,
-		path: path,
+		Reader: bytes.NewReader(m),
+		mmap:   m,
 	}
-}
-
-func (m *mmapIO) Read(p []byte) (n int, err error) {
-	return bytes.NewReader(m.mmap).Read(p)
-}
-
-func (m *mmapIO) Write(p []byte) (n int, err error) {
-	f, err := os.OpenFile(m.path, os.O_RDWR|os.O_CREATE, 0660)
-	if err != nil {
-		return 0, err
-	}
-	return f.Write(p)
-}
-
-func (m *mmapIO) Sync() error {
-	return m.mmap.Flush()
 }
 
 func (m *mmapIO) Close() error {

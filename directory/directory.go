@@ -9,9 +9,14 @@ type WriteCloseSyncer interface {
 	Sync() error
 }
 
+type ReaderCloser interface {
+	io.ReadCloser
+	io.ReaderAt
+}
+
 type Directory interface {
 	// TODO: Should be able to seek
-	Read(path string) (io.ReadCloser, error)
+	OpenRead(path string) (ReaderCloser, error)
 	AtomicRead(path string) ([]byte, error)
 	OpenWrite(path string) (WriteCloseSyncer, error)
 	AtomicWrite(path string, data []byte) error
