@@ -29,6 +29,10 @@ func (s *Segment) WithMaxDoc(maxDoc uint32) *Segment {
 	return newSegment(s.Index, s.meta.WithMaxDoc(maxDoc))
 }
 
+func (s *Segment) OpenRead(component SegmentComponent) (directory.ReaderCloser, error) {
+	return s.Index.Directory().OpenRead(s.meta.RelativePath(component))
+}
+
 func (s *Segment) OpenWrite(component SegmentComponent) (directory.WriteCloseSyncer, error) {
 	return s.Index.Directory().OpenWrite(s.meta.RelativePath(component))
 }

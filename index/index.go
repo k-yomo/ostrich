@@ -42,6 +42,18 @@ func (i *Index) LoadMetas() (*IndexMeta, error) {
 	return &indexMeta, nil
 }
 
+func (i *Index) SearchableSegments() ([]*Segment, error) {
+	meta, err := i.LoadMetas()
+	if err != nil {
+		return nil, err
+	}
+	segments := make([]*Segment, 0, len(meta.Segments))
+	for _, segmentMeta := range meta.Segments {
+		segments = append(segments, newSegment(i, segmentMeta))
+	}
+	return segments, nil
+}
+
 func (i *Index) NewSegment() *Segment {
 	segmentMeta := i.inventory.NewSegmentMeta(NewSegmentID(), 0)
 	return newSegment(i, segmentMeta)
