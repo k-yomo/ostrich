@@ -1,8 +1,12 @@
 package main
 
 import (
+	"fmt"
+	"github.com/k-yomo/ostrich/collector"
 	"github.com/k-yomo/ostrich/index"
 	"github.com/k-yomo/ostrich/indexer"
+	"github.com/k-yomo/ostrich/query"
+	"github.com/k-yomo/ostrich/reader"
 	"github.com/k-yomo/ostrich/schema"
 	"math/rand"
 	"time"
@@ -53,8 +57,17 @@ func main() {
 	}
 	time.Sleep(5 * time.Second)
 	// idx.DeleteDoc(3)
-	//
-	// _ = idx.Search("black cat")
-	// hits := idx.Search("black cat")
-	// pp.Println(hits)
+
+	indexReader, err := reader.NewIndexReader(idx)
+	if err != nil {
+		panic(err)
+	}
+	searcher := indexReader.Searcher()
+
+	queryParser := query.NewParser(idx, []schema.FieldID{titleField, descriptionField})
+	q := queryParser.Parse("black cat")
+	hits := index.Search(searcher, q, collector.NewTopDocsCollector(10, 0))
+	for _, hit := range hits {
+		fmt.Printf("docAddress: %+v, score: %v\n", hit.DocAddress, hit.Score)
+	}
 }

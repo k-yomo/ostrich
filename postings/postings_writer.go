@@ -3,6 +3,7 @@ package postings
 import (
 	"bytes"
 	"encoding/gob"
+	"github.com/k-yomo/ostrich/index"
 	"github.com/k-yomo/ostrich/schema"
 )
 
@@ -10,7 +11,7 @@ type UnorderedTermId = uint64
 
 type PostingsWriter interface {
 	Serialize(serializer *InvertedIndexSerializer, bytesOffset int) (writtenBytes int, termOffsetMap map[string]uint64, _ error)
-	IndexText(docId uint32, field schema.FieldID, tokens []string)
+	IndexText(docId index.DocID, field schema.FieldID, tokens []string)
 }
 
 type PerFieldPostingsWriter struct {
@@ -27,7 +28,7 @@ func (m *PerFieldPostingsWriter) PostingsWriterForFiled(field schema.FieldID) Po
 	return m.perFieldPostingsWriters[field]
 }
 
-func (m *PerFieldPostingsWriter) IndexText(docID uint32, field schema.FieldID, tokens []string) {
+func (m *PerFieldPostingsWriter) IndexText(docID index.DocID, field schema.FieldID, tokens []string) {
 	postingsWriter := m.perFieldPostingsWriters[field]
 	postingsWriter.IndexText(
 		docID,
@@ -73,11 +74,11 @@ func newPostingWriterFromFieldEntry(fieldEntry *schema.FieldEntry) PostingsWrite
 	// switch fieldEntry.FieldType {
 	// case schema.FieldTypeText:
 	// }
-	return &SpecializedPostingsWriter{InvertedIndex: map[string][]uint32{}}
+	return &SpecializedPostingsWriter{InvertedIndex: map[string][]index.DocID{}}
 }
 
 type SpecializedPostingsWriter struct {
-	InvertedIndex map[string][]uint32
+	InvertedIndex map[string][]index.DocID
 }
 
 func (s *SpecializedPostingsWriter) Serialize(serializer *InvertedIndexSerializer, bytesOffset int) (writtenBytes int, termOffsetMap map[string]uint64, _ error) {
@@ -98,7 +99,7 @@ func (s *SpecializedPostingsWriter) Serialize(serializer *InvertedIndexSerialize
 	return writtenBytes, termOffsetMap, nil
 }
 
-func (s *SpecializedPostingsWriter) IndexText(docId uint32, field schema.FieldID, terms []string) {
+func (s *SpecializedPostingsWriter) IndexText(docId index.DocID, field schema.FieldID, terms []string) {
 	for _, term := range terms {
 		s.InvertedIndex[term] = append(s.InvertedIndex[term], docId)
 	}

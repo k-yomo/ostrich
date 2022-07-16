@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"runtime"
+	"sync"
 
 	"github.com/k-yomo/ostrich/index"
 	"github.com/k-yomo/ostrich/internal/opstamp"
@@ -22,6 +23,7 @@ type IndexWriter struct {
 	index             *index.Index
 	heapSizePerThread int
 
+	operationWG       sync.WaitGroup
 	operationSender   chan<- []*AddOperation
 	operationReceiver <-chan []*AddOperation
 	segmentUpdater    *SegmentUpdater
@@ -79,6 +81,7 @@ func (i *IndexWriter) AddDocument(document *schema.Document) opstamp.OpStamp {
 		opstamp:  opStamp,
 		document: document,
 	}
+	i.operationWG.Add(1)
 	i.operationSender <- []*AddOperation{addOperation}
 
 	return opStamp
@@ -98,6 +101,7 @@ func (i *IndexWriter) addIndexWorker() {
 				// TODO: logging?
 				fmt.Println(err)
 			}
+			i.operationWG.Done()
 		}
 	}()
 
@@ -129,6 +133,8 @@ func (i *IndexWriter) indexDocuments(operations []*AddOperation) error {
 }
 
 func (i *IndexWriter) Commit() (opstamp.OpStamp, error) {
+	// TODO: recreate channel so that it won't block ongoing indexing
+	i.operationWG.Wait()
 	commitOpstamp := i.stamper.Stamp()
 	return commitOpstamp, i.segmentUpdater.Commit(commitOpstamp)
 }

@@ -33,7 +33,7 @@ func (m *mmapDirectory) OpenRead(path string) (ReaderCloser, error) {
 	if err != nil {
 		return nil, fmt.Errorf("open file: %w", err)
 	}
-	mem, err := mmap.Map(f, mmap.RDWR, 0)
+	mem, err := mmap.Map(f, mmap.RDONLY, 0)
 	if err != nil {
 		return nil, fmt.Errorf("mmap file: %w", err)
 	}

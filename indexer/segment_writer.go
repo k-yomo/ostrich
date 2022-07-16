@@ -9,7 +9,7 @@ import (
 )
 
 type SegmentWriter struct {
-	maxDoc             uint32
+	maxDoc             index.DocID
 	multifieldPostings *postings.PerFieldPostingsWriter
 	segmentSerializer  *SegmentSerializer
 	docOpstamps        []opstamp.OpStamp
