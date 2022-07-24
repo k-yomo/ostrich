@@ -3,9 +3,10 @@ package indexer
 import (
 	"errors"
 	"fmt"
+	"github.com/k-yomo/go-batch"
 	"math"
 	"runtime"
-	"sync"
+	"unsafe"
 
 	"github.com/k-yomo/ostrich/index"
 	"github.com/k-yomo/ostrich/internal/opstamp"
@@ -24,13 +25,8 @@ type IndexWriter struct {
 	index             *index.Index
 	heapSizePerThread int
 
-	operationWG       sync.WaitGroup
-	operationSender   chan<- []*AddOperation
-	operationReceiver <-chan []*AddOperation
-	segmentUpdater    *SegmentUpdater
-
-	workerID  int
-	ThreadNum int
+	operationBatcher *batch.Batch[*AddOperation]
+	segmentUpdater   *SegmentUpdater
 
 	stamper          *opstamp.Stamper
 	committedOpstamp opstamp.OpStamp
@@ -57,23 +53,26 @@ func NewIndexWriter(idx *index.Index, overallHeapBytes int) (*IndexWriter, error
 
 	stamper := opstamp.NewStamper(currentOpstamp)
 	segmentUpdater := NewSegmentUpdater(idx, indexMeta, stamper)
-	operationChan := make(chan []*AddOperation, MaxOperationQueueSize)
 
 	i := &IndexWriter{
 		index: idx,
 
-		operationSender:   operationChan,
-		operationReceiver: operationChan,
-		segmentUpdater:    segmentUpdater,
-
-		workerID:  0,
-		ThreadNum: threadNum,
+		segmentUpdater: segmentUpdater,
 
 		stamper:          stamper,
 		committedOpstamp: currentOpstamp,
 	}
 
-	i.startWorkers()
+	b := batch.New(func(operations []*AddOperation) {
+		err := i.indexDocuments(operations)
+		for _, op := range operations {
+			op.result(err)
+		}
+	})
+	b.HandlerLimit = threadNum
+	b.BufferedByteLimit = overallHeapBytes
+
+	i.operationBatcher = b
 
 	return i, nil
 }
@@ -107,34 +106,19 @@ func (i *IndexWriter) AddDocument(document *schema.Document) *AddDocumentResult 
 			resultChan <- err
 		},
 	}
-	i.operationWG.Add(1)
-	i.operationSender <- []*AddOperation{addOperation}
+	if err := i.operationBatcher.Add(addOperation, int(unsafe.Sizeof(addOperation))); err != nil {
+		return &AddDocumentResult{
+			OpStamp: opStamp,
+			Result: func() error {
+				return err
+			},
+		}
+	}
 
 	return &AddDocumentResult{
 		OpStamp: opStamp,
 		Result:  resultFunc,
 	}
-}
-
-func (i *IndexWriter) startWorkers() {
-	for j := 0; j < i.ThreadNum; j++ {
-		i.addIndexWorker()
-	}
-}
-
-func (i *IndexWriter) addIndexWorker() {
-	go func() {
-		for {
-			operations := <-i.operationReceiver
-			err := i.indexDocuments(operations)
-			for _, op := range operations {
-				op.result(err)
-			}
-			i.operationWG.Done()
-		}
-	}()
-
-	i.workerID += 1
 }
 
 func (i *IndexWriter) indexDocuments(operations []*AddOperation) error {
@@ -162,14 +146,13 @@ func (i *IndexWriter) indexDocuments(operations []*AddOperation) error {
 }
 
 func (i *IndexWriter) Commit() (opstamp.OpStamp, error) {
-	// TODO: recreate channel so that it won't block ongoing indexing
-	i.operationWG.Wait()
+	i.operationBatcher.Flush()
 	commitOpstamp := i.stamper.Stamp()
 	return commitOpstamp, i.segmentUpdater.Commit(commitOpstamp)
 }
 
 func (i *IndexWriter) Close() error {
 	i.closed = true
-	i.operationWG.Wait()
+	i.operationBatcher.Flush()
 	return nil
 }
