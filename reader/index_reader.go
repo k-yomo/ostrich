@@ -26,7 +26,7 @@ func (i *IndexReader) Reload() error {
 		return fmt.Errorf("open segment readers: %w", err)
 	}
 	// TODO: update to have searcher pool
-	searcher := index.NewSearcher(i.index.Schema(), i.index, segmentReaders)
+	searcher := index.NewSearcher(i.index, segmentReaders)
 	i.searcher = searcher
 	return nil
 }

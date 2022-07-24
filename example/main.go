@@ -71,11 +71,11 @@ func main() {
 	// idx.DeleteDoc(3)
 
 	indexReader, err := reader.NewIndexReader(idx)
-	defer indexReader.Close()
-
 	if err != nil {
 		panic(err)
 	}
+	defer indexReader.Close()
+
 	searcher := indexReader.Searcher()
 
 	queryParser := query.NewParser(idx, []schema.FieldID{phraseField, descriptionField})

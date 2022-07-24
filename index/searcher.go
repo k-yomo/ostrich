@@ -29,9 +29,9 @@ type Searcher struct {
 	segmentReaders []*SegmentReader
 }
 
-func NewSearcher(schema *schema.Schema, idx *Index, segmentReaders []*SegmentReader) *Searcher {
+func NewSearcher(idx *Index, segmentReaders []*SegmentReader) *Searcher {
 	return &Searcher{
-		schema:         schema,
+		schema:         idx.Schema(),
 		index:          idx,
 		segmentReaders: segmentReaders,
 	}
