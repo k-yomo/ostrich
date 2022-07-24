@@ -52,3 +52,7 @@ func (i *IndexReader) openSegmentReaders() ([]*index.SegmentReader, error) {
 
 	return segmentReaders, nil
 }
+
+func (i *IndexReader) Close() error {
+	return i.searcher.Close()
+}

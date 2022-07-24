@@ -25,6 +25,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	defer indexWriter.Close()
 
 	docs := []*schema.Document{
 		{FieldValues: []*schema.FieldValue{
@@ -70,6 +71,8 @@ func main() {
 	// idx.DeleteDoc(3)
 
 	indexReader, err := reader.NewIndexReader(idx)
+	defer indexReader.Close()
+
 	if err != nil {
 		panic(err)
 	}

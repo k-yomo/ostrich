@@ -45,3 +45,18 @@ func Search[T any](searcher *Searcher, q Query, c Collector[T]) T {
 	}
 	return c.MergeResults(results)
 }
+
+func (s *Searcher) Close() error {
+	for _, segmentReader := range s.segmentReaders {
+		if err := segmentReader.termdictFile.Close(); err != nil {
+			return err
+		}
+		if err := segmentReader.storeFile.Close(); err != nil {
+			return err
+		}
+		if err := segmentReader.postingsFile.Close(); err != nil {
+			return err
+		}
+	}
+	return nil
+}

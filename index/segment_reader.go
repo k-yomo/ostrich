@@ -7,7 +7,9 @@ import (
 )
 
 type SegmentReader struct {
-	maxDoc       DocID
+	SegmentID SegmentID
+	MaxDoc    DocID
+
 	termdictFile directory.ReaderCloser
 	storeFile    directory.ReaderCloser
 	postingsFile directory.ReaderCloser
@@ -30,14 +32,11 @@ func NewSegmentReader(segment *Segment) (*SegmentReader, error) {
 	}
 
 	return &SegmentReader{
-		maxDoc:       segment.Meta().MaxDoc,
+		SegmentID:    segment.Meta().SegmentID,
+		MaxDoc:       segment.Meta().MaxDoc,
 		termdictFile: termdictFile,
 		storeFile:    storeFile,
 		postingsFile: postingsFile,
 		schema:       segment.Schema(),
 	}, nil
-}
-
-func (s *SegmentReader) MaxDoc() DocID {
-	return s.maxDoc
 }
