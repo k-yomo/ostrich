@@ -22,7 +22,7 @@ type AllWeight struct {
 func (a *AllWeight) Scorer(segmentReader *index.SegmentReader) index.Scorer {
 	return &AllScorer{
 		doc:    0,
-		maxDoc: segmentReader.MaxDoc(),
+		maxDoc: segmentReader.MaxDoc,
 	}
 }
 
@@ -43,14 +43,14 @@ type AllScorer struct {
 }
 
 func (a *AllScorer) Advance() (index.DocID, error) {
-	if a.doc <= a.maxDoc {
+	if a.doc < a.maxDoc {
 		a.doc += 1
 	}
 	return a.Doc()
 }
 
 func (a *AllScorer) Doc() (index.DocID, error) {
-	if a.doc > a.maxDoc {
+	if a.doc >= a.maxDoc {
 		return 0, io.EOF
 	}
 	return a.doc, nil

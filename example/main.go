@@ -8,13 +8,12 @@ import (
 	"github.com/k-yomo/ostrich/query"
 	"github.com/k-yomo/ostrich/reader"
 	"github.com/k-yomo/ostrich/schema"
-	"math/rand"
 	"time"
 )
 
 func main() {
 	schemaBuilder := schema.NewBuilder()
-	titleField := schemaBuilder.AddTextField("title")
+	phraseField := schemaBuilder.AddTextField("phrase")
 	descriptionField := schemaBuilder.AddTextField("description")
 	//
 	idx, err := index.NewBuilder(schemaBuilder.Build()).CreateInDir("tmp")
@@ -30,24 +29,36 @@ func main() {
 	docs := []*schema.Document{
 		{FieldValues: []*schema.FieldValue{
 			{
-				FieldID: titleField,
-				Value:   "there is a white cat",
+				FieldID: phraseField,
+				Value:   "Down To The Wire",
 			},
 			{
 				FieldID: descriptionField,
-				Value:   "this is a description",
+				Value:   "A tense situation where the outcome is decided only in the last few seconds.",
 			},
 		}},
-		// {ID: 2, Text: "black hair cat"},
-		// {ID: 3, Text: "black cat"},
-		// {ID: 4, Text: "white dog"},
-		// {ID: 5, Text: "blue cat"},
-		// {ID: 6, Text: "black tiger"},
-		// {ID: 7, Text: "white hair dog"},
+		{FieldValues: []*schema.FieldValue{
+			{
+				FieldID: phraseField,
+				Value:   "Eat My Hat",
+			},
+			{
+				FieldID: descriptionField,
+				Value:   "Having confidence in a specific outcome; being almost sure about something",
+			},
+		}},
+		{FieldValues: []*schema.FieldValue{
+			{
+				FieldID: phraseField,
+				Value:   "When the Rubber Hits the Road",
+			},
+			{
+				FieldID: descriptionField,
+				Value:   "When something is about to begin, get serious, or put to the test.",
+			},
+		}},
 	}
 
-	rand.Seed(time.Now().UnixNano())
-	rand.Shuffle(len(docs), func(i, j int) { docs[i], docs[j] = docs[j], docs[i] })
 	for _, doc := range docs {
 		indexWriter.AddDocument(doc)
 	}
@@ -64,7 +75,7 @@ func main() {
 	}
 	searcher := indexReader.Searcher()
 
-	queryParser := query.NewParser(idx, []schema.FieldID{titleField, descriptionField})
+	queryParser := query.NewParser(idx, []schema.FieldID{phraseField, descriptionField})
 	q := queryParser.Parse("black cat")
 	hits := index.Search(searcher, q, collector.NewTopDocsCollector(10, 0))
 	for _, hit := range hits {
