@@ -1,6 +1,7 @@
 package indexer
 
 import (
+	"errors"
 	"fmt"
 	"math"
 	"runtime"
@@ -33,6 +34,8 @@ type IndexWriter struct {
 
 	stamper          *opstamp.Stamper
 	committedOpstamp opstamp.OpStamp
+
+	closed bool
 }
 
 func NewIndexWriter(idx *index.Index, overallHeapBytes int) (*IndexWriter, error) {
@@ -75,16 +78,42 @@ func NewIndexWriter(idx *index.Index, overallHeapBytes int) (*IndexWriter, error
 	return i, nil
 }
 
-func (i *IndexWriter) AddDocument(document *schema.Document) opstamp.OpStamp {
+type AddDocumentResult struct {
+	OpStamp opstamp.OpStamp
+	// Result blocks until the operation is finished
+	Result func() error
+}
+
+func (i *IndexWriter) AddDocument(document *schema.Document) *AddDocumentResult {
+	if i.closed {
+		return &AddDocumentResult{
+			OpStamp: 0,
+			Result: func() error {
+				return errors.New("writer is already closed")
+			},
+		}
+	}
+
+	resultChan := make(chan error, 1)
+	resultFunc := func() error {
+		return <-resultChan
+	}
+
 	opStamp := i.stamper.Stamp()
 	addOperation := &AddOperation{
 		opstamp:  opStamp,
 		document: document,
+		result: func(err error) {
+			resultChan <- err
+		},
 	}
 	i.operationWG.Add(1)
 	i.operationSender <- []*AddOperation{addOperation}
 
-	return opStamp
+	return &AddDocumentResult{
+		OpStamp: opStamp,
+		Result:  resultFunc,
+	}
 }
 
 func (i *IndexWriter) startWorkers() {
@@ -97,9 +126,9 @@ func (i *IndexWriter) addIndexWorker() {
 	go func() {
 		for {
 			operations := <-i.operationReceiver
-			if err := i.indexDocuments(operations); err != nil {
-				// TODO: logging?
-				fmt.Println(err)
+			err := i.indexDocuments(operations)
+			for _, op := range operations {
+				op.result(err)
 			}
 			i.operationWG.Done()
 		}
@@ -137,4 +166,10 @@ func (i *IndexWriter) Commit() (opstamp.OpStamp, error) {
 	i.operationWG.Wait()
 	commitOpstamp := i.stamper.Stamp()
 	return commitOpstamp, i.segmentUpdater.Commit(commitOpstamp)
+}
+
+func (i *IndexWriter) Close() error {
+	i.closed = true
+	i.operationWG.Wait()
+	return nil
 }

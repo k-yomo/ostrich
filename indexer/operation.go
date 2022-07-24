@@ -8,4 +8,5 @@ import (
 type AddOperation struct {
 	opstamp  opstamp.OpStamp
 	document *schema.Document
+	result   func(error)
 }
