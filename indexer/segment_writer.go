@@ -68,5 +68,11 @@ func (s *SegmentWriter) finalize() error {
 	if err != nil {
 		return err
 	}
+	if err := s.segmentSerializer.StoreWriter.Close(); err != nil {
+		return err
+	}
+	if err := s.segmentSerializer.PostingsSerializer.Close(); err != nil {
+		return err
+	}
 	return nil
 }

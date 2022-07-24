@@ -27,3 +27,13 @@ func NewInvertedIndexSerializer(segment *index.Segment) (*InvertedIndexSerialize
 		schema:        segment.Schema(),
 	}, nil
 }
+
+func (i *InvertedIndexSerializer) Close() error {
+	if err := i.termsWrite.Close(); err != nil {
+		return err
+	}
+	if err := i.postingsWrite.Close(); err != nil {
+		return err
+	}
+	return nil
+}

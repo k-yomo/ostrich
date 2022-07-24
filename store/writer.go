@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"github.com/k-yomo/ostrich/directory"
 	"github.com/k-yomo/ostrich/schema"
-	"github.com/k0kubun/pp"
 )
 
 const BlockSize = 16_384
@@ -25,13 +24,15 @@ func (s *StoreWriter) Store(document *schema.Document) error {
 	if err != nil {
 		return err
 	}
-	pp.Println(string(docJSON))
 	// TODO: makes it possible to read
 	if _, err := s.writer.Write(docJSON); err != nil {
 		return err
 	}
-	s.writer.Close()
 	s.doc++
 
 	return nil
+}
+
+func (s *StoreWriter) Close() error {
+	return s.writer.Close()
 }
