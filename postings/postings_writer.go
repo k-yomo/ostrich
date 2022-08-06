@@ -90,7 +90,7 @@ func (s *SpecializedPostingsWriter) Serialize(serializer *InvertedIndexSerialize
 		to := from + uint64(b.Len())
 		serializer.termsWrite.AddTermInfo(s.fieldID, &termdict.TermInfo{
 			Term:    term,
-			DocFreq: 1,
+			DocFreq: len(postingList),
 			PostingsRange: termdict.Range{
 				From: from,
 				To:   to,
