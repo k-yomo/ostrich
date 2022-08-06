@@ -80,9 +80,8 @@ func main() {
 
 	searcher := indexReader.Searcher()
 
-	queryParser := query.NewParser(idx, []schema.FieldID{phraseField, descriptionField})
-	q := queryParser.Parse("hat")
-	hits, err := reader.Search(searcher, q, collector.NewTopDocsCollector(10, 0))
+	termQuery := query.NewTermQuery(descriptionField, "hat")
+	hits, err := reader.Search(searcher, termQuery, collector.NewTopDocsCollector(10, 0))
 	if err != nil {
 		panic(err)
 	}

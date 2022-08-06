@@ -36,7 +36,6 @@ func (a *TermWeight) Scorer(segmentReader *reader.SegmentReader) (reader.Scorer,
 	if err != nil {
 		return nil, fmt.Errorf("initialize inverted index: %w", err)
 	}
-
 	postingList, err := postingsReader.ReadPostings(a.fieldID, a.term)
 	if err != nil {
 		return nil, fmt.Errorf("read postings: %w", err)
