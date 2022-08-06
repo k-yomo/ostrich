@@ -7,7 +7,7 @@ import (
 
 type IndexReader struct {
 	index    *index.Index
-	searcher *index.Searcher
+	searcher *Searcher
 }
 
 func NewIndexReader(idx *index.Index) (*IndexReader, error) {
@@ -26,24 +26,24 @@ func (i *IndexReader) Reload() error {
 		return fmt.Errorf("open segment readers: %w", err)
 	}
 	// TODO: update to have searcher pool
-	searcher := index.NewSearcher(i.index, segmentReaders)
+	searcher := NewSearcher(i.index, segmentReaders)
 	i.searcher = searcher
 	return nil
 }
 
-func (i *IndexReader) Searcher() *index.Searcher {
+func (i *IndexReader) Searcher() *Searcher {
 	return i.searcher
 }
 
-func (i *IndexReader) openSegmentReaders() ([]*index.SegmentReader, error) {
+func (i *IndexReader) openSegmentReaders() ([]*SegmentReader, error) {
 	searchableSegments, err := i.index.SearchableSegments()
 	if err != nil {
 		return nil, fmt.Errorf("get searchable segments: %w", err)
 	}
 
-	segmentReaders := make([]*index.SegmentReader, 0, len(searchableSegments))
+	segmentReaders := make([]*SegmentReader, 0, len(searchableSegments))
 	for _, segment := range searchableSegments {
-		segmentReader, err := index.NewSegmentReader(segment)
+		segmentReader, err := NewSegmentReader(segment)
 		if err != nil {
 			return nil, fmt.Errorf("initialize segment reader: %w", err)
 		}

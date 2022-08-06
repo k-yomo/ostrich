@@ -2,6 +2,8 @@ package schema
 
 import "sort"
 
+type DocID uint32
+
 type Document struct {
 	FieldValues []*FieldValue
 }

@@ -9,11 +9,11 @@ import (
 )
 
 type SegmentWriter struct {
-	maxDoc             index.DocID
-	multifieldPostings *postings.PerFieldPostingsWriter
-	segmentSerializer  *SegmentSerializer
-	docOpstamps        []opstamp.OpStamp
-	analyzer           analyzer.Analyzer
+	maxDoc                 schema.DocID
+	perFieldPostingsWriter *postings.PerFieldPostingsWriter
+	segmentSerializer      *SegmentSerializer
+	docOpstamps            []opstamp.OpStamp
+	analyzer               analyzer.Analyzer
 }
 
 func newSegmentWriter(memoryBudget int, segment *index.Segment, schema *schema.Schema) (*SegmentWriter, error) {
@@ -22,11 +22,11 @@ func newSegmentWriter(memoryBudget int, segment *index.Segment, schema *schema.S
 		return nil, err
 	}
 	return &SegmentWriter{
-		maxDoc:             0,
-		segmentSerializer:  segmentSerializer,
-		multifieldPostings: postings.NewMultiFieldPostingsWriter(schema),
-		docOpstamps:        nil,
-		analyzer:           segment.Index.Analyzer,
+		maxDoc:                 0,
+		segmentSerializer:      segmentSerializer,
+		perFieldPostingsWriter: postings.NewMultiFieldPostingsWriter(schema),
+		docOpstamps:            nil,
+		analyzer:               segment.Index.Analyzer,
 	}, nil
 }
 
@@ -45,11 +45,10 @@ func (s *SegmentWriter) addDocument(addOperation *AddOperation, sc *schema.Schem
 					tokens = append(tokens, s.analyzer.Analyze(v)...)
 				}
 			}
-
 			if len(tokens) == 0 {
 				continue
 			}
-			postingsWriter := s.multifieldPostings.PostingsWriterForFiled(fieldAndFieldValues.Field)
+			postingsWriter := s.perFieldPostingsWriter.PostingsWriterForFiled(fieldAndFieldValues.Field)
 			postingsWriter.IndexText(docID, fieldAndFieldValues.Field, tokens)
 		}
 	}
@@ -64,7 +63,7 @@ func (s *SegmentWriter) addDocument(addOperation *AddOperation, sc *schema.Schem
 }
 
 func (s *SegmentWriter) finalize() error {
-	err := s.multifieldPostings.Serialize(s.segmentSerializer.PostingsSerializer)
+	err := s.perFieldPostingsWriter.Serialize(s.segmentSerializer.PostingsSerializer)
 	if err != nil {
 		return err
 	}

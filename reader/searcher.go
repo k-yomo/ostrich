@@ -1,11 +1,12 @@
-package index
+package reader
 
 import (
+	"github.com/k-yomo/ostrich/index"
 	"github.com/k-yomo/ostrich/schema"
 )
 
 type Collector[T any] interface {
-	CollectSegment(w Weight, segmentOrd int, segmentReader *SegmentReader) T
+	CollectSegment(w Weight, segmentOrd int, segmentReader *SegmentReader) (T, error)
 	MergeResults(results []T) T
 }
 
@@ -14,22 +15,22 @@ type Query interface {
 }
 
 type Weight interface {
-	Scorer(segmentReader *SegmentReader) Scorer
-	ForEachPruning(threshold float64, reader *SegmentReader, callback func(docID DocID, score float64) float64)
+	Scorer(segmentReader *SegmentReader) (Scorer, error)
+	ForEachPruning(threshold float64, reader *SegmentReader, callback func(docID schema.DocID, score float64) float64) error
 }
 
 type Scorer interface {
-	DocSet
+	index.DocSet
 	Score() float64
 }
 
 type Searcher struct {
 	schema         *schema.Schema
-	index          *Index
+	index          *index.Index
 	segmentReaders []*SegmentReader
 }
 
-func NewSearcher(idx *Index, segmentReaders []*SegmentReader) *Searcher {
+func NewSearcher(idx *index.Index, segmentReaders []*SegmentReader) *Searcher {
 	return &Searcher{
 		schema:         idx.Schema(),
 		index:          idx,
@@ -37,13 +38,18 @@ func NewSearcher(idx *Index, segmentReaders []*SegmentReader) *Searcher {
 	}
 }
 
-func Search[T any](searcher *Searcher, q Query, c Collector[T]) T {
+func Search[T any](searcher *Searcher, q Query, c Collector[T]) (T, error) {
 	results := make([]T, 0, len(searcher.segmentReaders))
 	weight := q.Weight(searcher, false)
 	for i, segmentReader := range searcher.segmentReaders {
-		results = append(results, c.CollectSegment(weight, i, segmentReader))
+		result, err := c.CollectSegment(weight, i, segmentReader)
+		if err != nil {
+			var temp T
+			return temp, err
+		}
+		results = append(results, result)
 	}
-	return c.MergeResults(results)
+	return c.MergeResults(results), nil
 }
 
 func (s *Searcher) Close() error {

@@ -4,10 +4,11 @@ import (
 	"github.com/k-yomo/ostrich/directory"
 	"github.com/k-yomo/ostrich/index"
 	"github.com/k-yomo/ostrich/schema"
+	"github.com/k-yomo/ostrich/termdict"
 )
 
 type InvertedIndexSerializer struct {
-	termsWrite    directory.WriteCloseSyncer
+	termsWrite    *termdict.TermWriter
 	postingsWrite directory.WriteCloseSyncer
 	schema        *schema.Schema
 }
@@ -22,7 +23,7 @@ func NewInvertedIndexSerializer(segment *index.Segment) (*InvertedIndexSerialize
 		return nil, err
 	}
 	return &InvertedIndexSerializer{
-		termsWrite:    termsWrite,
+		termsWrite:    termdict.NewTermWriter(termsWrite),
 		postingsWrite: postingsWrite,
 		schema:        segment.Schema(),
 	}, nil

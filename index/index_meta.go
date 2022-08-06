@@ -18,9 +18,9 @@ type IndexMeta struct {
 }
 
 type SegmentMeta struct {
-	SegmentID SegmentID   `json:"segmentId"`
-	MaxDoc    DocID       `json:"maxDoc"`
-	Deletes   *DeleteMeta `json:"deletes"`
+	SegmentID SegmentID    `json:"segmentId"`
+	MaxDoc    schema.DocID `json:"maxDoc"`
+	Deletes   *DeleteMeta  `json:"deletes"`
 }
 
 type SegmentMetaInventory struct {
@@ -40,7 +40,7 @@ func NewIndexMeta(schema *schema.Schema) *IndexMeta {
 	}
 }
 
-func (s *SegmentMeta) WithMaxDoc(maxDoc DocID) *SegmentMeta {
+func (s *SegmentMeta) WithMaxDoc(maxDoc schema.DocID) *SegmentMeta {
 	return &SegmentMeta{
 		SegmentID: s.SegmentID,
 		MaxDoc:    maxDoc,
@@ -70,7 +70,7 @@ func (s *SegmentMeta) RelativePath(component SegmentComponent) string {
 	}
 }
 
-func (i *SegmentMetaInventory) NewSegmentMeta(segmentID SegmentID, maxDoc DocID) *SegmentMeta {
+func (i *SegmentMetaInventory) NewSegmentMeta(segmentID SegmentID, maxDoc schema.DocID) *SegmentMeta {
 	segmentMeta := &SegmentMeta{
 		SegmentID: segmentID,
 		MaxDoc:    maxDoc,

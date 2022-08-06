@@ -3,15 +3,15 @@ package postings
 import (
 	"bytes"
 	"encoding/gob"
-	"github.com/k-yomo/ostrich/index"
 	"github.com/k-yomo/ostrich/schema"
+	"github.com/k-yomo/ostrich/termdict"
 )
 
 type UnorderedTermId = uint64
 
 type PostingsWriter interface {
-	Serialize(serializer *InvertedIndexSerializer, bytesOffset int) (writtenBytes int, termOffsetMap map[string]uint64, _ error)
-	IndexText(docId index.DocID, field schema.FieldID, tokens []string)
+	Serialize(serializer *InvertedIndexSerializer, bytesOffset int) (writtenBytes int, _ error)
+	IndexText(docId schema.DocID, field schema.FieldID, tokens []string)
 }
 
 type PerFieldPostingsWriter struct {
@@ -28,7 +28,7 @@ func (m *PerFieldPostingsWriter) PostingsWriterForFiled(field schema.FieldID) Po
 	return m.perFieldPostingsWriters[field]
 }
 
-func (m *PerFieldPostingsWriter) IndexText(docID index.DocID, field schema.FieldID, tokens []string) {
+func (m *PerFieldPostingsWriter) IndexText(docID schema.DocID, field schema.FieldID, tokens []string) {
 	postingsWriter := m.perFieldPostingsWriters[field]
 	postingsWriter.IndexText(
 		docID,
@@ -38,23 +38,17 @@ func (m *PerFieldPostingsWriter) IndexText(docID index.DocID, field schema.Field
 }
 
 func (m *PerFieldPostingsWriter) Serialize(serializer *InvertedIndexSerializer) error {
-	fieldTermPostingsOffsetMap := map[schema.FieldID]map[string]uint64{}
 	var offset int
 	for _, field := range serializer.schema.Fields {
 		postingsWriter := m.PostingsWriterForFiled(field.ID)
-		writtenBytes, termOffsetMap, err := postingsWriter.Serialize(serializer, offset)
+		writtenBytes, err := postingsWriter.Serialize(serializer, offset)
 		if err != nil {
 			return err
 		}
-		fieldTermPostingsOffsetMap[field.ID] = termOffsetMap
 		offset += writtenBytes
 	}
 
-	b := bytes.NewBuffer([]byte{})
-	if err := gob.NewEncoder(b).Encode(fieldTermPostingsOffsetMap); err != nil {
-		return err
-	}
-	if _, err := serializer.termsWrite.Write(b.Bytes()); err != nil {
+	if err := serializer.termsWrite.Serialize(); err != nil {
 		return err
 	}
 
@@ -74,32 +68,44 @@ func newPostingWriterFromFieldEntry(fieldEntry *schema.FieldEntry) PostingsWrite
 	// switch fieldEntry.FieldType {
 	// case schema.FieldTypeText:
 	// }
-	return &SpecializedPostingsWriter{InvertedIndex: map[string][]index.DocID{}}
+	return &SpecializedPostingsWriter{
+		fieldID:       fieldEntry.ID,
+		InvertedIndex: map[string][]schema.DocID{},
+	}
 }
 
 type SpecializedPostingsWriter struct {
-	InvertedIndex map[string][]index.DocID
+	fieldID       schema.FieldID
+	InvertedIndex map[string][]schema.DocID
 }
 
-func (s *SpecializedPostingsWriter) Serialize(serializer *InvertedIndexSerializer, bytesOffset int) (writtenBytes int, termOffsetMap map[string]uint64, _ error) {
-	termOffsetMap = map[string]uint64{}
+func (s *SpecializedPostingsWriter) Serialize(serializer *InvertedIndexSerializer, bytesOffset int) (writtenBytes int, _ error) {
 	var buf []byte
-	for term, postings := range s.InvertedIndex {
+	for term, postingList := range s.InvertedIndex {
 		b := bytes.NewBuffer([]byte{})
-		if err := gob.NewEncoder(b).Encode(postings); err != nil {
-			return 0, nil, err
+		if err := gob.NewEncoder(b).Encode(postingList); err != nil {
+			return 0, err
 		}
-		termOffsetMap[term] = uint64(bytesOffset + len(buf) + 1)
+		from := uint64(bytesOffset + len(buf))
+		to := from + uint64(b.Len())
+		serializer.termsWrite.AddTermInfo(s.fieldID, &termdict.TermInfo{
+			Term:    term,
+			DocFreq: 1,
+			PostingsRange: termdict.Range{
+				From: from,
+				To:   to,
+			},
+		})
 		buf = append(buf, b.Bytes()...)
 	}
 	writtenBytes, err := serializer.postingsWrite.Write(buf)
 	if err != nil {
-		return 0, nil, nil
+		return 0, nil
 	}
-	return writtenBytes, termOffsetMap, nil
+	return writtenBytes, nil
 }
 
-func (s *SpecializedPostingsWriter) IndexText(docId index.DocID, field schema.FieldID, terms []string) {
+func (s *SpecializedPostingsWriter) IndexText(docId schema.DocID, field schema.FieldID, terms []string) {
 	for _, term := range terms {
 		s.InvertedIndex[term] = append(s.InvertedIndex[term], docId)
 	}
