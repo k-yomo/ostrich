@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"sync"
 
-	"github.com/k-yomo/ostrich/analyzer"
 	"github.com/k-yomo/ostrich/directory"
 	"github.com/k-yomo/ostrich/schema"
 )
@@ -14,8 +13,6 @@ type Index struct {
 	schema    *schema.Schema
 	inventory *SegmentMetaInventory
 
-	Analyzer analyzer.Analyzer
-
 	mu *sync.Mutex
 }
 
@@ -24,7 +21,6 @@ func NewIndexFromMetas(directory directory.Directory, metas *IndexMeta, inventor
 		directory: directory,
 		schema:    metas.Schema,
 		inventory: inventory,
-		Analyzer:  &analyzer.EnglishAnalyzer{},
 		mu:        &sync.Mutex{},
 	}
 }

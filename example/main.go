@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/k-yomo/ostrich/analyzer"
 	"github.com/k-yomo/ostrich/collector"
 	"github.com/k-yomo/ostrich/index"
 	"github.com/k-yomo/ostrich/indexer"
@@ -13,8 +14,9 @@ import (
 
 func main() {
 	schemaBuilder := schema.NewBuilder()
-	phraseField := schemaBuilder.AddTextField("phrase")
-	descriptionField := schemaBuilder.AddTextField("description")
+	englishAnalyzer := analyzer.NewEnglishAnalyzer()
+	phraseField := schemaBuilder.AddTextField("phrase", englishAnalyzer)
+	descriptionField := schemaBuilder.AddTextField("description", englishAnalyzer)
 	//
 	idx, err := index.NewBuilder(schemaBuilder.Build()).CreateInDir("tmp")
 	if err != nil {

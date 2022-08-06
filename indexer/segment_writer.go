@@ -1,7 +1,6 @@
 package indexer
 
 import (
-	"github.com/k-yomo/ostrich/analyzer"
 	"github.com/k-yomo/ostrich/index"
 	"github.com/k-yomo/ostrich/internal/opstamp"
 	"github.com/k-yomo/ostrich/postings"
@@ -13,7 +12,6 @@ type SegmentWriter struct {
 	perFieldPostingsWriter *postings.PerFieldPostingsWriter
 	segmentSerializer      *SegmentSerializer
 	docOpstamps            []opstamp.OpStamp
-	analyzer               analyzer.Analyzer
 }
 
 func newSegmentWriter(memoryBudget int, segment *index.Segment, schema *schema.Schema) (*SegmentWriter, error) {
@@ -26,7 +24,6 @@ func newSegmentWriter(memoryBudget int, segment *index.Segment, schema *schema.S
 		segmentSerializer:      segmentSerializer,
 		perFieldPostingsWriter: postings.NewMultiFieldPostingsWriter(schema),
 		docOpstamps:            nil,
-		analyzer:               segment.Index.Analyzer,
 	}, nil
 }
 
@@ -42,7 +39,7 @@ func (s *SegmentWriter) addDocument(addOperation *AddOperation, sc *schema.Schem
 			for _, fieldValue := range fieldAndFieldValues.FieldValues {
 				switch v := fieldValue.Value.(type) {
 				case string:
-					tokens = append(tokens, s.analyzer.Analyze(v)...)
+					tokens = append(tokens, fieldEntry.Analyzer.Analyze(v)...)
 				}
 			}
 			if len(tokens) == 0 {
