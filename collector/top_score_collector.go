@@ -3,6 +3,8 @@ package collector
 import (
 	"github.com/k-yomo/ostrich/index"
 	"github.com/k-yomo/ostrich/pkg/heap"
+	"github.com/k-yomo/ostrich/reader"
+	"github.com/k-yomo/ostrich/schema"
 	"math"
 )
 
@@ -16,21 +18,21 @@ type TopDocsResult struct {
 	Score      float64
 }
 
-func NewTopDocsCollector(limit int, offset int) index.Collector[[]*TopDocsResult] {
+func NewTopDocsCollector(limit int, offset int) reader.Collector[[]*TopDocsResult] {
 	return &TopDocsCollector{
 		limit:  limit,
 		offset: offset,
 	}
 }
 
-func (t *TopDocsCollector) CollectSegment(w index.Weight, segmentOrd int, segmentReader *index.SegmentReader) []*TopDocsResult {
+func (t *TopDocsCollector) CollectSegment(w reader.Weight, segmentOrd int, segmentReader *reader.SegmentReader) ([]*TopDocsResult, error) {
 	topCollector := heap.NewHeap[*TopDocsResult](func(a, b *TopDocsResult) bool {
 		return a.Score < b.Score
 	})
 
 	heapLen := t.limit + t.offset
 	threshold := math.SmallestNonzeroFloat64
-	w.ForEachPruning(threshold, segmentReader, func(docID index.DocID, score float64) float64 {
+	err := w.ForEachPruning(threshold, segmentReader, func(docID schema.DocID, score float64) float64 {
 		if topCollector.Len() < heapLen {
 			topCollector.Push(&TopDocsResult{
 				DocAddress: index.DocAddress{
@@ -56,7 +58,11 @@ func (t *TopDocsCollector) CollectSegment(w index.Weight, segmentOrd int, segmen
 		return threshold
 	})
 
-	return t.getTopDocsResultsFromHeap(topCollector)
+	if err != nil {
+		return nil, err
+	}
+
+	return t.getTopDocsResultsFromHeap(topCollector), nil
 }
 
 func (t *TopDocsCollector) MergeResults(results [][]*TopDocsResult) []*TopDocsResult {

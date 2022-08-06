@@ -25,7 +25,7 @@ func (s *Segment) Meta() *SegmentMeta {
 	return s.meta
 }
 
-func (s *Segment) WithMaxDoc(maxDoc DocID) *Segment {
+func (s *Segment) WithMaxDoc(maxDoc schema.DocID) *Segment {
 	return newSegment(s.Index, s.meta.WithMaxDoc(maxDoc))
 }
 

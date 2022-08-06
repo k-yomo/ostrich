@@ -79,8 +79,11 @@ func main() {
 	searcher := indexReader.Searcher()
 
 	queryParser := query.NewParser(idx, []schema.FieldID{phraseField, descriptionField})
-	q := queryParser.Parse("black cat")
-	hits := index.Search(searcher, q, collector.NewTopDocsCollector(10, 0))
+	q := queryParser.Parse("hat")
+	hits, err := reader.Search(searcher, q, collector.NewTopDocsCollector(10, 0))
+	if err != nil {
+		panic(err)
+	}
 	for _, hit := range hits {
 		fmt.Printf("docAddress: %+v, score: %v\n", hit.DocAddress, hit.Score)
 	}

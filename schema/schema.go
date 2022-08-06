@@ -8,3 +8,7 @@ type Schema struct {
 	Fields   []*FieldEntry `json:"fields"`
 	fieldMap map[string]*FieldEntry
 }
+
+func (s *Schema) FieldEntry(fieldID FieldID) *FieldEntry {
+	return s.Fields[fieldID]
+}

@@ -1,17 +1,17 @@
 package index
 
+import "github.com/k-yomo/ostrich/schema"
+
 type Document struct {
 	fields map[string]interface{}
 }
 
-type DocID uint32
-
 type DocAddress struct {
 	SegmentOrd int
-	DocID      DocID
+	DocID      schema.DocID
 }
 
 type DocSet interface {
-	Advance() (DocID, error)
-	Doc() (DocID, error)
+	Advance() (schema.DocID, error)
+	Doc() (schema.DocID, error)
 }

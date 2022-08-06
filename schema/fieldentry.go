@@ -1,8 +1,8 @@
 package schema
 
 type FieldEntry struct {
-	ID   FieldID `json:"id"`
-	Name string  `json:"name"`
+	ID        FieldID   `json:"id"`
+	Name      string    `json:"name"`
 	FieldType FieldType `json:"fieldType"`
 }
 
