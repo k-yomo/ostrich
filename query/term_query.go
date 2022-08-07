@@ -2,6 +2,7 @@ package query
 
 import (
 	"fmt"
+	"github.com/k-yomo/ostrich/postings"
 	"github.com/k-yomo/ostrich/reader"
 	"github.com/k-yomo/ostrich/schema"
 	"io"
@@ -19,31 +20,41 @@ func NewTermQuery(fieldID schema.FieldID, term string) reader.Query {
 	}
 }
 
-func (a *TermQuery) Weight(_ *reader.Searcher, _ bool) reader.Weight {
-	return &TermWeight{
-		fieldID: a.fieldID,
-		term:    a.term,
+func (a *TermQuery) Weight(searcher *reader.Searcher, _ bool) (reader.Weight, error) {
+	var totalDocNum uint64 = 0
+	for _, segmentReader := range searcher.SegmentReaders() {
+		totalDocNum += uint64(segmentReader.MaxDoc)
 	}
+	docFrequency, err := searcher.DocFreq(a.fieldID, a.term)
+	if err != nil {
+		return nil, fmt.Errorf("get doc frequency: %w", err)
+	}
+
+	return &TermWeight{
+		fieldID:          a.fieldID,
+		term:             a.term,
+		similarityWeight: NewTFIDFWeight(totalDocNum, docFrequency),
+	}, nil
 }
 
 type TermWeight struct {
-	fieldID schema.FieldID
-	term    string
+	fieldID          schema.FieldID
+	term             string
+	similarityWeight *TfIDFWeight
 }
 
 func (a *TermWeight) Scorer(segmentReader *reader.SegmentReader) (reader.Scorer, error) {
-	postingsReader, err := segmentReader.InvertedIndex(a.fieldID)
+	invertedIndexReader, err := segmentReader.InvertedIndex(a.fieldID)
 	if err != nil {
 		return nil, fmt.Errorf("initialize inverted index: %w", err)
 	}
-
-	postingList, err := postingsReader.ReadPostings(a.fieldID, a.term)
+	postingsReader, err := invertedIndexReader.ReadPostings(a.term)
 	if err != nil {
 		return nil, fmt.Errorf("read postings: %w", err)
 	}
 	return &TermScorer{
-		postingList: postingList,
-		curIdx:      0,
+		postingsReader:   postingsReader,
+		similarityWeight: a.similarityWeight,
 	}, nil
 }
 
@@ -64,24 +75,22 @@ func (a *TermWeight) ForEachPruning(threshold float64, segmentReader *reader.Seg
 }
 
 type TermScorer struct {
-	postingList []schema.DocID
-	curIdx      int
+	postingsReader   *postings.PostingsReader
+	similarityWeight *TfIDFWeight
 }
 
 func (a *TermScorer) Advance() (schema.DocID, error) {
-	if a.curIdx < len(a.postingList) {
-		a.curIdx += 1
-	}
-	return a.Doc()
+	return a.postingsReader.Advance()
 }
 
 func (a *TermScorer) Doc() (schema.DocID, error) {
-	if a.curIdx >= len(a.postingList) {
-		return 0, io.EOF
-	}
-	return a.postingList[a.curIdx], nil
+	return a.postingsReader.Doc()
+}
+
+func (a *TermScorer) TermFreq() uint64 {
+	return a.postingsReader.TermFreq()
 }
 
 func (a *TermScorer) Score() float64 {
-	return 1.0
+	return a.similarityWeight.Score(float64(a.TermFreq()))
 }

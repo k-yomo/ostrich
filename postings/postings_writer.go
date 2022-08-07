@@ -69,23 +69,37 @@ func newPostingWriterFromFieldEntry(fieldEntry *schema.FieldEntry) PostingsWrite
 	// case schema.FieldTypeText:
 	// }
 	return &SpecializedPostingsWriter{
-		fieldID:       fieldEntry.ID,
-		InvertedIndex: map[string][]schema.DocID{},
+		fieldID:         fieldEntry.ID,
+		InvertedIndex:   map[string][]schema.DocID{},
+		TermFrequencies: map[string][]uint64{},
 	}
 }
 
 type SpecializedPostingsWriter struct {
-	fieldID       schema.FieldID
-	InvertedIndex map[string][]schema.DocID
+	fieldID         schema.FieldID
+	InvertedIndex   map[string][]schema.DocID
+	TermFrequencies map[string][]uint64
 }
 
 func (s *SpecializedPostingsWriter) Serialize(serializer *InvertedIndexSerializer, bytesOffset int) (writtenBytes int, _ error) {
 	var buf []byte
+	// TODO: store total number of tokens for calculating BM25
+	// buf := make([]byte, 8)
+	// totalTokenNum := uint64(len(s.InvertedIndex))
+	// binary.LittleEndian.PutUint64(buf, totalTokenNum)
 	for term, postingList := range s.InvertedIndex {
+		footer := Footer{}
 		b := bytes.NewBuffer([]byte{})
 		if err := gob.NewEncoder(b).Encode(postingList); err != nil {
 			return 0, err
 		}
+		footer.postingsByteNum = uint64(b.Len())
+		if err := gob.NewEncoder(b).Encode(s.TermFrequencies[term]); err != nil {
+			return 0, err
+		}
+		footer.termFrequencyByteNum = uint64(b.Len()) - footer.postingsByteNum
+		footer.Write(b)
+
 		from := uint64(bytesOffset + len(buf))
 		to := from + uint64(b.Len())
 		serializer.termsWrite.AddTermInfo(s.fieldID, &termdict.TermInfo{
@@ -106,7 +120,12 @@ func (s *SpecializedPostingsWriter) Serialize(serializer *InvertedIndexSerialize
 }
 
 func (s *SpecializedPostingsWriter) IndexText(docId schema.DocID, field schema.FieldID, terms []string) {
+	termFreqMap := map[string]uint64{}
 	for _, term := range terms {
+		termFreqMap[term] += 1
+	}
+	for term, freq := range termFreqMap {
 		s.InvertedIndex[term] = append(s.InvertedIndex[term], docId)
+		s.TermFrequencies[term] = append(s.TermFrequencies[term], freq)
 	}
 }

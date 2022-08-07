@@ -14,7 +14,7 @@ type SegmentWriter struct {
 	docOpstamps            []opstamp.OpStamp
 }
 
-func newSegmentWriter(memoryBudget int, segment *index.Segment, schema *schema.Schema) (*SegmentWriter, error) {
+func newSegmentWriter(segment *index.Segment, schema *schema.Schema) (*SegmentWriter, error) {
 	segmentSerializer, err := NewSegmentSerializer(segment)
 	if err != nil {
 		return nil, err
