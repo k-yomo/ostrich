@@ -124,7 +124,7 @@ func (i *IndexWriter) AddDocument(document *schema.Document) *AddDocumentResult 
 func (i *IndexWriter) indexDocuments(operations []*AddOperation) error {
 	segment := i.index.NewSegment()
 	indexSchema := segment.Schema()
-	segmentWriter, err := newSegmentWriter(i.heapSizePerThread, segment, indexSchema)
+	segmentWriter, err := newSegmentWriter(segment, indexSchema)
 	if err != nil {
 		return err
 	}

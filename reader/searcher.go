@@ -1,6 +1,7 @@
 package reader
 
 import (
+	"fmt"
 	"github.com/k-yomo/ostrich/index"
 	"github.com/k-yomo/ostrich/schema"
 )
@@ -11,7 +12,7 @@ type Collector[T any] interface {
 }
 
 type Query interface {
-	Weight(searcher *Searcher, scoringEnabled bool) Weight
+	Weight(searcher *Searcher, scoringEnabled bool) (Weight, error)
 }
 
 type Weight interface {
@@ -39,24 +40,40 @@ func NewSearcher(idx *index.Index, segmentReaders []*SegmentReader) *Searcher {
 }
 
 func Search[T any](searcher *Searcher, q Query, c Collector[T]) (T, error) {
+	var zeroT T
 	results := make([]T, 0, len(searcher.segmentReaders))
-	weight := q.Weight(searcher, false)
+	weight, err := q.Weight(searcher, false)
+	if err != nil {
+		return zeroT, fmt.Errorf("initialize weight: %w", err)
+	}
 	for i, segmentReader := range searcher.segmentReaders {
 		result, err := c.CollectSegment(weight, i, segmentReader)
 		if err != nil {
-			var temp T
-			return temp, err
+			return zeroT, fmt.Errorf("collect segment: %w", err)
 		}
 		results = append(results, result)
 	}
 	return c.MergeResults(results), nil
 }
 
+func (s *Searcher) SegmentReaders() []*SegmentReader {
+	return s.segmentReaders
+}
+
+func (s *Searcher) DocFreq(fieldID schema.FieldID, term string) (int, error) {
+	totalDocFreq := 0
+	for _, segmentReader := range s.segmentReaders {
+		postingsReader, err := segmentReader.InvertedIndex(fieldID)
+		if err != nil {
+			return 0, err
+		}
+		totalDocFreq += postingsReader.DocFreq(term)
+	}
+	return totalDocFreq, nil
+}
+
 func (s *Searcher) Close() error {
 	for _, segmentReader := range s.segmentReaders {
-		if err := segmentReader.termdictFile.Close(); err != nil {
-			return err
-		}
 		if err := segmentReader.storeFile.Close(); err != nil {
 			return err
 		}

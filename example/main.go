@@ -9,7 +9,6 @@ import (
 	"github.com/k-yomo/ostrich/query"
 	"github.com/k-yomo/ostrich/reader"
 	"github.com/k-yomo/ostrich/schema"
-	"time"
 )
 
 func main() {
@@ -17,7 +16,7 @@ func main() {
 	englishAnalyzer := analyzer.NewEnglishAnalyzer()
 	phraseField := schemaBuilder.AddTextField("phrase", englishAnalyzer)
 	descriptionField := schemaBuilder.AddTextField("description", englishAnalyzer)
-	//
+
 	idx, err := index.NewBuilder(schemaBuilder.Build()).CreateInDir("tmp")
 	if err != nil {
 		panic(err)
@@ -69,8 +68,6 @@ func main() {
 	if _, err := indexWriter.Commit(); err != nil {
 		panic(err)
 	}
-	time.Sleep(5 * time.Second)
-	// idx.DeleteDoc(3)
 
 	indexReader, err := reader.NewIndexReader(idx)
 	if err != nil {
@@ -80,7 +77,7 @@ func main() {
 
 	searcher := indexReader.Searcher()
 
-	termQuery := query.NewTermQuery(descriptionField, "hat")
+	termQuery := query.NewTermQuery(phraseField, "hat")
 	hits, err := reader.Search(searcher, termQuery, collector.NewTopDocsCollector(10, 0))
 	if err != nil {
 		panic(err)
