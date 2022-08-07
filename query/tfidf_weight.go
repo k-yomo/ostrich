@@ -7,9 +7,10 @@ type TfIDFWeight struct {
 }
 
 func NewTFIDFWeight(totalDocNum uint64, documentFrequency int) *TfIDFWeight {
-	df := 1.0 + float64(documentFrequency)
+	// using inverse document frequency smooth
+	// https://en.wikipedia.org/wiki/Tf%E2%80%93idf#Inverse_document_frequency_2
 	return &TfIDFWeight{
-		idf: 1.0 + math.Log2(float64(totalDocNum)/df),
+		idf: 1.0 + math.Log(float64(totalDocNum)/float64(1+documentFrequency)),
 	}
 }
 
