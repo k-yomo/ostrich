@@ -15,8 +15,7 @@ type ReaderCloser interface {
 }
 
 type Directory interface {
-	// TODO: Should be able to seek
-	OpenRead(path string) (ReaderCloser, error)
+	OpenRead(path string) (*FileSlice, error)
 	AtomicRead(path string) ([]byte, error)
 	OpenWrite(path string) (WriteCloseSyncer, error)
 	AtomicWrite(path string, data []byte) error

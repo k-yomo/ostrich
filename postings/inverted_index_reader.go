@@ -1,19 +1,18 @@
 package postings
 
 import (
-	"fmt"
 	"github.com/k-yomo/ostrich/directory"
 	"github.com/k-yomo/ostrich/termdict"
 )
 
 type InvertedIndexReader struct {
 	termDict     map[string]*termdict.TermInfo
-	postingsFile directory.ReaderCloser
+	postingsFile *directory.FileSlice
 }
 
 func NewInvertedIndexReader(
 	termDict map[string]*termdict.TermInfo,
-	postingsFile directory.ReaderCloser,
+	postingsFile *directory.FileSlice,
 ) *InvertedIndexReader {
 	return &InvertedIndexReader{
 		termDict:     termDict,
@@ -26,11 +25,7 @@ func (p *InvertedIndexReader) ReadPostings(term string) (*PostingsReader, error)
 	if !ok {
 		return nil, nil
 	}
-	postingsBytes := make([]byte, termInfo.PostingsRange.Len())
-	if _, err := p.postingsFile.ReadAt(postingsBytes, int64(termInfo.PostingsRange.From)); err != nil {
-		return nil, fmt.Errorf("read posting list: %w", err)
-	}
-	return NewPostingsReader(postingsBytes)
+	return NewPostingsReader(p.postingsFile.Slice(termInfo.PostingsRange.From, termInfo.PostingsRange.To))
 }
 
 func (p *InvertedIndexReader) DocFreq(term string) int {

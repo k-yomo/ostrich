@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/gob"
 	"fmt"
+	"github.com/k-yomo/ostrich/directory"
 	"github.com/k-yomo/ostrich/schema"
 	"io"
 )
@@ -15,9 +16,14 @@ type PostingsReader struct {
 	curIdx int
 }
 
-func NewPostingsReader(postingsBytes []byte) (*PostingsReader, error) {
+func NewPostingsReader(postingsFile *directory.FileSlice) (*PostingsReader, error) {
+	postingsBytes, err := postingsFile.Read(0, postingsFile.Len())
+	if err != nil {
+		return nil, fmt.Errorf("read posting file: %w", err)
+	}
+
 	p := &PostingsReader{}
-	footer := ReadFooter(postingsBytes)
+	footer := readFooter(postingsBytes)
 	if err := gob.NewDecoder(bytes.NewReader(postingsBytes[:footer.postingsByteNum])).Decode(&p.postingList); err != nil {
 		return nil, fmt.Errorf("decode posting list: %w", err)
 	}

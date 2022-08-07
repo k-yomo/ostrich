@@ -19,7 +19,7 @@ func (f *Footer) Write(buf *bytes.Buffer) {
 	buf.Write(b)
 }
 
-func ReadFooter(b []byte) *Footer {
+func readFooter(b []byte) *Footer {
 	termFrequencyByteNum := binary.LittleEndian.Uint64(b[len(b)-8:])
 	postingsByteNum := binary.LittleEndian.Uint64(b[len(b)-16 : len(b)-8])
 	return &Footer{

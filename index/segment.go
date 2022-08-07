@@ -29,7 +29,7 @@ func (s *Segment) WithMaxDoc(maxDoc schema.DocID) *Segment {
 	return newSegment(s.Index, s.meta.WithMaxDoc(maxDoc))
 }
 
-func (s *Segment) OpenRead(component SegmentComponent) (directory.ReaderCloser, error) {
+func (s *Segment) OpenRead(component SegmentComponent) (*directory.FileSlice, error) {
 	return s.Index.Directory().OpenRead(s.meta.RelativePath(component))
 }
 

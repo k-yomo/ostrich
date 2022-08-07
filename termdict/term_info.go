@@ -1,11 +1,11 @@
 package termdict
 
 type Range struct {
-	From uint64
-	To   uint64
+	From int
+	To   int
 }
 
-func (r Range) Len() uint64 {
+func (r Range) Len() int {
 	return r.To - r.From
 }
 

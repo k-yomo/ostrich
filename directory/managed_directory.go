@@ -66,7 +66,7 @@ func NewManagedDirectory(dir Directory) (*ManagedDirectory, error) {
 	}, nil
 }
 
-func (m *ManagedDirectory) OpenRead(path string) (ReaderCloser, error) {
+func (m *ManagedDirectory) OpenRead(path string) (*FileSlice, error) {
 	return m.directory.OpenRead(path)
 }
 func (m *ManagedDirectory) AtomicRead(path string) ([]byte, error) {

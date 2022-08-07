@@ -14,8 +14,8 @@ type SegmentReader struct {
 	MaxDoc    schema.DocID
 
 	termDict     termdict.TermDict
-	storeFile    directory.ReaderCloser
-	postingsFile directory.ReaderCloser
+	storeFile    *directory.FileSlice
+	postingsFile *directory.FileSlice
 
 	schema *schema.Schema
 }

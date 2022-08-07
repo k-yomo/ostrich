@@ -3,18 +3,17 @@ package directory
 import (
 	"bytes"
 	"fmt"
-	"io"
 	"io/fs"
 	"sync"
 )
-
-var _ Directory = &memoryDirectory{}
 
 type memoryDirectory struct {
 	// TODO: replace with sync.Map
 	pathBytesMap map[string][]byte
 	mu           *sync.RWMutex
 }
+
+var _ Directory = &memoryDirectory{}
 
 func NewMemoryDirectory() *memoryDirectory {
 	return &memoryDirectory{
@@ -23,7 +22,7 @@ func NewMemoryDirectory() *memoryDirectory {
 	}
 }
 
-func (m *memoryDirectory) OpenRead(path string) (ReaderCloser, error) {
+func (m *memoryDirectory) OpenRead(path string) (*FileSlice, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
@@ -31,18 +30,8 @@ func (m *memoryDirectory) OpenRead(path string) (ReaderCloser, error) {
 	if !ok {
 		return nil, fmt.Errorf("path '%s' does not exist", path)
 	}
-	return newMemoryBytes(b, m.mu, nil), nil
-}
-
-func (m *memoryDirectory) Read(path string) (io.ReadCloser, error) {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-
-	b, ok := m.pathBytesMap[path]
-	if !ok {
-		return nil, fmt.Errorf("path '%s' does not exist", path)
-	}
-	return newMemoryBytes(b, m.mu, nil), nil
+	noopCloser := func() error { return nil }
+	return NewFileSlice(bytes.NewReader(b), noopCloser), nil
 }
 
 func (m *memoryDirectory) AtomicRead(path string) ([]byte, error) {

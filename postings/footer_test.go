@@ -14,8 +14,8 @@ func TestFooter(t *testing.T) {
 	buf := bytes.NewBuffer([]byte{})
 	f.Write(buf)
 
-	got := ReadFooter(buf.Bytes())
+	got := readFooter(buf.Bytes())
 	if !reflect.DeepEqual(f, got) {
-		t.Errorf("ReadFooter() got = %v, want %v", got, f)
+		t.Errorf("readFooter() got = %v, want %v", got, f)
 	}
 }

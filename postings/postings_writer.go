@@ -100,8 +100,8 @@ func (s *SpecializedPostingsWriter) Serialize(serializer *InvertedIndexSerialize
 		footer.termFrequencyByteNum = uint64(b.Len()) - footer.postingsByteNum
 		footer.Write(b)
 
-		from := uint64(bytesOffset + len(buf))
-		to := from + uint64(b.Len())
+		from := bytesOffset + len(buf)
+		to := from + b.Len()
 		serializer.termsWrite.AddTermInfo(s.fieldID, &termdict.TermInfo{
 			Term:    term,
 			DocFreq: len(postingList),
