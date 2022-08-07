@@ -22,8 +22,7 @@ const (
 )
 
 type IndexWriter struct {
-	index             *index.Index
-	heapSizePerThread int
+	index *index.Index
 
 	operationBatcher *batch.Batch[*AddOperation]
 	segmentUpdater   *SegmentUpdater
@@ -35,15 +34,6 @@ type IndexWriter struct {
 }
 
 func NewIndexWriter(idx *index.Index, overallHeapBytes int) (*IndexWriter, error) {
-	threadNum := int(math.Min(float64(runtime.GOMAXPROCS(0)), 8))
-	heapSizePerThread := overallHeapBytes / threadNum
-	if heapSizePerThread < HeapSizeMin {
-		threadNum = int(math.Max(float64(overallHeapBytes/HeapSizeMin), 1))
-	}
-	if heapSizePerThread < HeapSizeMin {
-		return nil, fmt.Errorf("heap size per thread needs to be at least %d", HeapSizeMin)
-	}
-
 	indexMeta, err := idx.LoadMetas()
 	if err != nil {
 		return nil, fmt.Errorf("load metas: %w", err)
@@ -63,6 +53,7 @@ func NewIndexWriter(idx *index.Index, overallHeapBytes int) (*IndexWriter, error
 		committedOpstamp: currentOpstamp,
 	}
 
+	threadNum := int(math.Min(float64(runtime.GOMAXPROCS(0)), 8))
 	b := batch.New(func(operations []*AddOperation) {
 		err := i.indexDocuments(operations)
 		for _, op := range operations {
