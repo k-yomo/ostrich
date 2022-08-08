@@ -50,8 +50,16 @@ func (i *Index) SearchableSegments() ([]*Segment, error) {
 	return segments, nil
 }
 
+func (i *Index) NewSegmentMeta(segmentID SegmentID, maxDoc schema.DocID) *SegmentMeta {
+	return i.inventory.NewSegmentMeta(NewSegmentID(), maxDoc)
+}
+
 func (i *Index) NewSegment() *Segment {
 	segmentMeta := i.inventory.NewSegmentMeta(NewSegmentID(), 0)
+	return newSegment(i, segmentMeta)
+}
+
+func (i *Index) Segment(segmentMeta *SegmentMeta) *Segment {
 	return newSegment(i, segmentMeta)
 }
 

@@ -1,6 +1,7 @@
 package indexer
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/k-yomo/ostrich/index"
@@ -52,4 +53,25 @@ func (s *SegmentManager) removeEmptySegments() {
 			s.registers.committed.removeSegmentEntry(segmentEntry.SegmentID())
 		}
 	}
+}
+
+func (s *SegmentManager) mergeableSegments(inMergeSegmentIDs []index.SegmentID) (commited []*index.SegmentMeta, uncommited []*index.SegmentMeta) {
+	return s.registers.committed.mergeableSegments(inMergeSegmentIDs),
+		s.registers.uncommitted.mergeableSegments(inMergeSegmentIDs)
+}
+
+func (s *SegmentManager) segmentEntriesForMerge(segmentIDs []index.SegmentID) []*SegmentEntry {
+	segmentEntries := make([]*SegmentEntry, 0, len(segmentIDs))
+	if s.registers.committed.containsAll(segmentIDs) {
+		for _, segmentID := range segmentIDs {
+			segmentEntries = append(segmentEntries, s.registers.committed.segmentStatus[segmentID])
+		}
+	} else if s.registers.uncommitted.containsAll(segmentIDs) {
+		for _, segmentID := range segmentIDs {
+			segmentEntries = append(segmentEntries, s.registers.uncommitted.segmentStatus[segmentID])
+		}
+	} else {
+		panic(fmt.Sprintf("unregistered segment id is included: %v", segmentIDs))
+	}
+	return segmentEntries
 }

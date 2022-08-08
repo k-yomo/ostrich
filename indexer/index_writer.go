@@ -139,7 +139,11 @@ func (i *IndexWriter) indexDocuments(operations []*AddOperation) error {
 func (i *IndexWriter) Commit() (opstamp.OpStamp, error) {
 	i.operationBatcher.Flush()
 	commitOpstamp := i.stamper.Stamp()
-	return commitOpstamp, i.segmentUpdater.Commit(commitOpstamp)
+	if err := i.segmentUpdater.Commit(commitOpstamp); err != nil {
+		return 0, err
+	}
+	i.segmentUpdater.ConsiderMergeOptions()
+	return commitOpstamp, nil
 }
 
 func (i *IndexWriter) Close() error {
