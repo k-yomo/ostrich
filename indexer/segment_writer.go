@@ -1,6 +1,8 @@
 package indexer
 
 import (
+	"fmt"
+	"github.com/k-yomo/ostrich/analyzer"
 	"github.com/k-yomo/ostrich/index"
 	"github.com/k-yomo/ostrich/internal/opstamp"
 	"github.com/k-yomo/ostrich/postings"
@@ -39,7 +41,11 @@ func (s *SegmentWriter) addDocument(addOperation *AddOperation, sc *schema.Schem
 			for _, fieldValue := range fieldAndFieldValues.FieldValues {
 				switch v := fieldValue.Value.(type) {
 				case string:
-					tokens = append(tokens, fieldEntry.Analyzer.Analyze(v)...)
+					a, ok := analyzer.Get(fieldEntry.AnalyzerName)
+					if !ok {
+						return fmt.Errorf("analyzer '%s' is not registered", fieldEntry.AnalyzerName)
+					}
+					tokens = append(tokens, a.Analyze(v)...)
 				}
 			}
 			if len(tokens) == 0 {

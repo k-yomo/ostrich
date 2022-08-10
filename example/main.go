@@ -13,9 +13,9 @@ import (
 
 func main() {
 	schemaBuilder := schema.NewBuilder()
-	englishAnalyzer := analyzer.NewEnglishAnalyzer()
-	phraseField := schemaBuilder.AddTextField("phrase", englishAnalyzer)
-	descriptionField := schemaBuilder.AddTextField("description", englishAnalyzer)
+	analyzer.Register("en_stem", analyzer.NewEnglishAnalyzer())
+	phraseField := schemaBuilder.AddTextField("phrase", "en_stem")
+	descriptionField := schemaBuilder.AddTextField("description", "en_stem")
 
 	idx, err := index.NewBuilder(schemaBuilder.Build()).OpenOrCreate("tmp")
 	if err != nil {

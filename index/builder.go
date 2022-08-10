@@ -1,6 +1,8 @@
 package index
 
 import (
+	"errors"
+	"fmt"
 	"github.com/k-yomo/ostrich/directory"
 	"github.com/k-yomo/ostrich/schema"
 )
@@ -16,9 +18,33 @@ func NewBuilder(indexSchema *schema.Schema) *Builder {
 func (b *Builder) CreateInDir(path string) (*Index, error) {
 	mmapDirectory, err := directory.NewMMapDirectory(path)
 	if err != nil {
+		return nil, fmt.Errorf("open mmap directory: %v", err)
+	}
+	exists, err := mmapDirectory.Exists(metaFileName)
+	if err != nil {
 		return nil, err
 	}
-	return b.create(mmapDirectory)
+	if exists {
+		return nil, errors.New("previous index is in the directory")
+	} else {
+		return b.create(mmapDirectory)
+	}
+}
+
+func (b *Builder) OpenOrCreate(path string) (*Index, error) {
+	mmapDirectory, err := directory.NewMMapDirectory(path)
+	if err != nil {
+		return nil, fmt.Errorf("open mmap directory: %v", err)
+	}
+	exists, err := mmapDirectory.Exists(metaFileName)
+	if err != nil {
+		return nil, err
+	}
+	if exists {
+		return b.open(mmapDirectory)
+	} else {
+		return b.create(mmapDirectory)
+	}
 }
 
 func (b *Builder) create(dir directory.Directory) (*Index, error) {
@@ -26,13 +52,26 @@ func (b *Builder) create(dir directory.Directory) (*Index, error) {
 	if err != nil {
 		return nil, err
 	}
-	if err := b.saveNewMetas(managedDirectory); err != nil {
+	if err := b.saveNewMeta(managedDirectory); err != nil {
 		return nil, err
 	}
 	indexMeta := NewIndexMeta(b.schema)
-	return NewIndexFromMetas(managedDirectory, indexMeta, &SegmentMetaInventory{}), nil
+	return NewIndexFromMeta(managedDirectory, indexMeta, &SegmentMetaInventory{}), nil
 }
 
-func (b *Builder) saveNewMetas(dir directory.Directory) error {
-	return SaveMetas(NewIndexMeta(b.schema), dir)
+func (b *Builder) open(dir directory.Directory) (*Index, error) {
+	managedDirectory, err := directory.NewManagedDirectory(dir)
+	if err != nil {
+		return nil, err
+	}
+	inventory := &SegmentMetaInventory{}
+	meta, err := LoadMeta(dir, inventory)
+	if err != nil {
+		return nil, err
+	}
+	return NewIndexFromMeta(managedDirectory, meta, inventory), nil
+}
+
+func (b *Builder) saveNewMeta(dir directory.Directory) error {
+	return SaveMeta(NewIndexMeta(b.schema), dir)
 }

@@ -6,6 +6,7 @@ import (
 	"github.com/k-yomo/ostrich/directory"
 	"github.com/k-yomo/ostrich/internal/opstamp"
 	"github.com/k-yomo/ostrich/schema"
+	"sync"
 )
 
 const metaFileName = "meta.json"
@@ -25,6 +26,7 @@ type SegmentMeta struct {
 
 type SegmentMetaInventory struct {
 	inventory []*SegmentMeta
+	mu        sync.Mutex
 }
 
 type DeleteMeta struct {
@@ -76,15 +78,29 @@ func (i *SegmentMetaInventory) NewSegmentMeta(segmentID SegmentID, maxDoc schema
 		MaxDoc:    maxDoc,
 		Deletes:   nil,
 	}
-	// TODO: Make it thread safe
+	i.mu.Lock()
 	i.inventory = append(i.inventory, segmentMeta)
+	i.mu.Unlock()
 	return segmentMeta
 }
 
-func SaveMetas(meta *IndexMeta, dir directory.Directory) error {
+func SaveMeta(meta *IndexMeta, dir directory.Directory) error {
 	metaJSON, err := json.Marshal(meta)
 	if err != nil {
 		return err
 	}
 	return dir.AtomicWrite(metaFileName, metaJSON)
+}
+
+func LoadMeta(directory directory.Directory, inventory *SegmentMetaInventory) (*IndexMeta, error) {
+	metaData, err := directory.AtomicRead(metaFileName)
+	if err != nil {
+		return nil, err
+	}
+	var indexMeta IndexMeta
+	if err := json.Unmarshal(metaData, &indexMeta); err != nil {
+		return nil, err
+	}
+
+	return &indexMeta, nil
 }

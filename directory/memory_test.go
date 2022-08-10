@@ -1,12 +1,11 @@
 package directory
 
 import (
-	"io"
 	"reflect"
 	"testing"
 )
 
-func TestMemoryDirectory_Read(t *testing.T) {
+func TestMemoryDirectory_AtomicRead(t *testing.T) {
 	t.Parallel()
 
 	type args struct {
@@ -46,19 +45,14 @@ func TestMemoryDirectory_Read(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			got, err := tt.memoryDirectory.Read(tt.args.path)
+			got, err := tt.memoryDirectory.AtomicRead(tt.args.path)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Read() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !tt.wantErr {
-				b := make([]byte, len(tt.want))
-				if _, err := got.Read(b); err != nil && err != io.EOF {
-					t.Error(err)
-					return
-				}
-				if !reflect.DeepEqual(b, tt.want) {
-					t.Errorf("Read() got = %v, want %v", b, tt.want)
+				if !reflect.DeepEqual(got, tt.want) {
+					t.Errorf("AtomicRead() got = %v, want %v", got, tt.want)
 				}
 			}
 		})

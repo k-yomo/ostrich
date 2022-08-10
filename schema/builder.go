@@ -1,7 +1,5 @@
 package schema
 
-import "github.com/k-yomo/ostrich/analyzer"
-
 type Builder struct {
 	Fields   []*FieldEntry `json:"fields"`
 	FieldMap map[string]*FieldEntry
@@ -13,9 +11,9 @@ func NewBuilder() *Builder {
 	}
 }
 
-func (b *Builder) AddTextField(fieldName string, analyzer *analyzer.Analyzer) FieldID {
+func (b *Builder) AddTextField(fieldName string, analyzerName string) FieldID {
 	field := FieldID(len(b.Fields))
-	fieldEntry := newFieldEntry(field, fieldName, FieldTypeText, analyzer)
+	fieldEntry := newFieldEntry(field, fieldName, FieldTypeText, analyzerName)
 	b.Fields = append(b.Fields, fieldEntry)
 	b.FieldMap[fieldName] = fieldEntry
 	return field

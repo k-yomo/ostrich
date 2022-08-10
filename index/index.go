@@ -1,7 +1,6 @@
 package index
 
 import (
-	"encoding/json"
 	"sync"
 
 	"github.com/k-yomo/ostrich/directory"
@@ -16,30 +15,21 @@ type Index struct {
 	mu *sync.Mutex
 }
 
-func NewIndexFromMetas(directory directory.Directory, metas *IndexMeta, inventory *SegmentMetaInventory) *Index {
+func NewIndexFromMeta(directory directory.Directory, meta *IndexMeta, inventory *SegmentMetaInventory) *Index {
 	return &Index{
 		directory: directory,
-		schema:    metas.Schema,
+		schema:    meta.Schema,
 		inventory: inventory,
 		mu:        &sync.Mutex{},
 	}
 }
 
-func (i *Index) LoadMetas() (*IndexMeta, error) {
-	metaData, err := i.directory.AtomicRead(metaFileName)
-	if err != nil {
-		return nil, err
-	}
-	var indexMeta IndexMeta
-	if err := json.Unmarshal(metaData, &indexMeta); err != nil {
-		return nil, err
-	}
-
-	return &indexMeta, nil
+func (i *Index) LoadMeta() (*IndexMeta, error) {
+	return LoadMeta(i.directory, i.inventory)
 }
 
 func (i *Index) SearchableSegments() ([]*Segment, error) {
-	meta, err := i.LoadMetas()
+	meta, err := LoadMeta(i.directory, i.inventory)
 	if err != nil {
 		return nil, err
 	}
@@ -50,8 +40,16 @@ func (i *Index) SearchableSegments() ([]*Segment, error) {
 	return segments, nil
 }
 
+func (i *Index) NewSegmentMeta(segmentID SegmentID, maxDoc schema.DocID) *SegmentMeta {
+	return i.inventory.NewSegmentMeta(segmentID, maxDoc)
+}
+
 func (i *Index) NewSegment() *Segment {
 	segmentMeta := i.inventory.NewSegmentMeta(NewSegmentID(), 0)
+	return newSegment(i, segmentMeta)
+}
+
+func (i *Index) Segment(segmentMeta *SegmentMeta) *Segment {
 	return newSegment(i, segmentMeta)
 }
 

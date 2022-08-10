@@ -1,19 +1,17 @@
 package schema
 
-import "github.com/k-yomo/ostrich/analyzer"
-
 type FieldEntry struct {
-	ID        FieldID   `json:"id"`
-	Name      string    `json:"name"`
-	FieldType FieldType `json:"fieldType"`
-	Analyzer  *analyzer.Analyzer
+	ID           FieldID   `json:"id"`
+	Name         string    `json:"name"`
+	FieldType    FieldType `json:"fieldType"`
+	AnalyzerName string    `json:"analyzer"`
 }
 
-func newFieldEntry(id FieldID, name string, fieldType FieldType, analyzer *analyzer.Analyzer) *FieldEntry {
+func newFieldEntry(id FieldID, name string, fieldType FieldType, analyzerName string) *FieldEntry {
 	return &FieldEntry{
-		ID:        id,
-		Name:      name,
-		FieldType: fieldType,
-		Analyzer:  analyzer,
+		ID:           id,
+		Name:         name,
+		FieldType:    fieldType,
+		AnalyzerName: analyzerName,
 	}
 }
