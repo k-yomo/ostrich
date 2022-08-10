@@ -74,7 +74,6 @@ func (s *SegmentUpdater) storeMeta(indexMeta *index.IndexMeta) {
 
 func (s *SegmentUpdater) considerMergeOptions() {
 	s.Lock()
-
 	curOpstamp := s.stamper.Stamp()
 	committedSegments, uncommittedSegments := s.mergeableSegments()
 

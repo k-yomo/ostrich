@@ -9,11 +9,6 @@ type WriteCloseSyncer interface {
 	Sync() error
 }
 
-type ReaderCloser interface {
-	io.ReadCloser
-	io.ReaderAt
-}
-
 type Directory interface {
 	OpenRead(path string) (*FileSlice, error)
 	AtomicRead(path string) ([]byte, error)
