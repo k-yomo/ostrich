@@ -2,6 +2,7 @@ package indexer
 
 import (
 	"github.com/k-yomo/ostrich/index"
+	"github.com/k-yomo/ostrich/pkg/list"
 	"sort"
 )
 
@@ -43,6 +44,25 @@ func (s *SegmentRegister) segmentEntries() []*SegmentEntry {
 		entries = append(entries, entry)
 	}
 	return entries
+}
+
+func (s *SegmentRegister) mergeableSegments(inMergeSegmentIDs []index.SegmentID) []*index.SegmentMeta {
+	mergeableSegments := make([]*index.SegmentMeta, 0, len(s.segmentStatus))
+	for _, entry := range s.segmentStatus {
+		if !list.Contains(inMergeSegmentIDs, entry.SegmentID()) {
+			mergeableSegments = append(mergeableSegments, entry.meta)
+		}
+	}
+	return mergeableSegments
+}
+
+func (s *SegmentRegister) containsAll(segmentIDs []index.SegmentID) bool {
+	for _, segmentID := range segmentIDs {
+		if _, ok := s.segmentStatus[segmentID]; !ok {
+			return false
+		}
+	}
+	return true
 }
 
 func (s *SegmentRegister) addSegmentEntry(segmentEntry *SegmentEntry) {

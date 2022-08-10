@@ -63,10 +63,7 @@ func (s *Searcher) SegmentReaders() []*SegmentReader {
 func (s *Searcher) DocFreq(fieldID schema.FieldID, term string) (int, error) {
 	totalDocFreq := 0
 	for _, segmentReader := range s.segmentReaders {
-		postingsReader, err := segmentReader.InvertedIndex(fieldID)
-		if err != nil {
-			return 0, err
-		}
+		postingsReader := segmentReader.InvertedIndex(fieldID)
 		totalDocFreq += postingsReader.DocFreq(term)
 	}
 	return totalDocFreq, nil
@@ -74,9 +71,9 @@ func (s *Searcher) DocFreq(fieldID schema.FieldID, term string) (int, error) {
 
 func (s *Searcher) Close() error {
 	for _, segmentReader := range s.segmentReaders {
-		if err := segmentReader.storeFile.Close(); err != nil {
-			return err
-		}
+		// if err := segmentReader.storeFile.Close(); err != nil {
+		// 	return err
+		// }
 		if err := segmentReader.postingsFile.Close(); err != nil {
 			return err
 		}

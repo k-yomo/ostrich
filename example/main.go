@@ -17,7 +17,7 @@ func main() {
 	phraseField := schemaBuilder.AddTextField("phrase", englishAnalyzer)
 	descriptionField := schemaBuilder.AddTextField("description", englishAnalyzer)
 
-	idx, err := index.NewBuilder(schemaBuilder.Build()).CreateInDir("tmp")
+	idx, err := index.NewBuilder(schemaBuilder.Build()).OpenOrCreate("tmp")
 	if err != nil {
 		panic(err)
 	}
@@ -64,7 +64,6 @@ func main() {
 	for _, doc := range docs {
 		indexWriter.AddDocument(doc)
 	}
-
 	if _, err := indexWriter.Commit(); err != nil {
 		panic(err)
 	}

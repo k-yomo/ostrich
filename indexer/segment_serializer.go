@@ -27,3 +27,13 @@ func NewSegmentSerializer(segment *index.Segment) (*SegmentSerializer, error) {
 		PostingsSerializer: postingsSerializer,
 	}, nil
 }
+
+func (s *SegmentSerializer) Close() error {
+	if err := s.PostingsSerializer.Close(); err != nil {
+		return err
+	}
+	if err := s.StoreWriter.Close(); err != nil {
+		return err
+	}
+	return nil
+}

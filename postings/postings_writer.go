@@ -12,6 +12,7 @@ type UnorderedTermId = uint64
 type PostingsWriter interface {
 	Serialize(serializer *InvertedIndexSerializer, bytesOffset int) (writtenBytes int, _ error)
 	IndexText(docId schema.DocID, field schema.FieldID, tokens []string)
+	AddTermFreq(term string, docID schema.DocID, termFreq uint64)
 }
 
 type PerFieldPostingsWriter struct {
@@ -24,8 +25,8 @@ func NewMultiFieldPostingsWriter(s *schema.Schema) *PerFieldPostingsWriter {
 	}
 }
 
-func (m *PerFieldPostingsWriter) PostingsWriterForFiled(field schema.FieldID) PostingsWriter {
-	return m.perFieldPostingsWriters[field]
+func (m *PerFieldPostingsWriter) PostingsWriterForFiled(fieldID schema.FieldID) PostingsWriter {
+	return m.perFieldPostingsWriters[fieldID]
 }
 
 func (m *PerFieldPostingsWriter) IndexText(docID schema.DocID, field schema.FieldID, tokens []string) {
@@ -114,18 +115,22 @@ func (s *SpecializedPostingsWriter) Serialize(serializer *InvertedIndexSerialize
 	}
 	writtenBytes, err := serializer.postingsWrite.Write(buf)
 	if err != nil {
-		return 0, nil
+		return 0, err
 	}
 	return writtenBytes, nil
 }
 
-func (s *SpecializedPostingsWriter) IndexText(docId schema.DocID, field schema.FieldID, terms []string) {
+func (s *SpecializedPostingsWriter) IndexText(docID schema.DocID, field schema.FieldID, terms []string) {
 	termFreqMap := map[string]uint64{}
 	for _, term := range terms {
 		termFreqMap[term] += 1
 	}
 	for term, freq := range termFreqMap {
-		s.InvertedIndex[term] = append(s.InvertedIndex[term], docId)
-		s.TermFrequencies[term] = append(s.TermFrequencies[term], freq)
+		s.AddTermFreq(term, docID, freq)
 	}
+}
+
+func (s *SpecializedPostingsWriter) AddTermFreq(term string, docID schema.DocID, termFreq uint64) {
+	s.InvertedIndex[term] = append(s.InvertedIndex[term], docID)
+	s.TermFrequencies[term] = append(s.TermFrequencies[term], termFreq)
 }

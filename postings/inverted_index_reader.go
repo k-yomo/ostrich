@@ -11,7 +11,7 @@ type InvertedIndexReader struct {
 }
 
 func NewInvertedIndexReader(
-	termDict map[string]*termdict.TermInfo,
+	termDict termdict.TermDict,
 	postingsFile *directory.FileSlice,
 ) *InvertedIndexReader {
 	return &InvertedIndexReader{
@@ -20,10 +20,14 @@ func NewInvertedIndexReader(
 	}
 }
 
+func (p *InvertedIndexReader) TermDict() termdict.TermDict {
+	return p.termDict
+}
+
 func (p *InvertedIndexReader) ReadPostings(term string) (*PostingsReader, error) {
 	termInfo, ok := p.termDict[term]
 	if !ok {
-		return nil, nil
+		return &PostingsReader{}, nil
 	}
 	return NewPostingsReader(p.postingsFile.Slice(termInfo.PostingsRange.From, termInfo.PostingsRange.To))
 }

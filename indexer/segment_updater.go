@@ -1,18 +1,23 @@
 package indexer
 
 import (
+	"fmt"
 	"github.com/k-yomo/ostrich/index"
 	"github.com/k-yomo/ostrich/internal/opstamp"
+	"log"
 	"sort"
 	"sync"
 )
 
 type SegmentUpdater struct {
-	indexMeta      *index.IndexMeta
 	index          *index.Index
+	activeMeta     *index.IndexMeta
 	segmentManager *SegmentManager
+	mergePolicy    MergePolicy
 
-	activeMeta *index.IndexMeta
+	stamper *opstamp.Stamper
+
+	segmentIDsInMerge []index.SegmentID
 
 	sync.RWMutex
 }
@@ -21,9 +26,11 @@ func NewSegmentUpdater(idx *index.Index, indexMeta *index.IndexMeta, stamper *op
 	segmentManager := NewSegmentManager(indexMeta.Segments)
 
 	return &SegmentUpdater{
-		indexMeta:      indexMeta,
+		activeMeta:     indexMeta,
 		index:          idx,
 		segmentManager: segmentManager,
+		mergePolicy:    NewLogMergePolicy(),
+		stamper:        stamper,
 	}
 }
 
@@ -32,6 +39,9 @@ func (s *SegmentUpdater) AddSegment(segmentEntry *SegmentEntry) {
 }
 
 func (s *SegmentUpdater) Commit(opStamp opstamp.OpStamp) error {
+	s.Lock()
+	defer s.Unlock()
+
 	segmentEntries := s.segmentManager.segmentEntries()
 	s.segmentManager.commit(segmentEntries)
 	return s.saveMetas(opStamp)
@@ -50,7 +60,7 @@ func (s *SegmentUpdater) saveMetas(opStamp opstamp.OpStamp) error {
 		Schema:   s.index.Schema(),
 		Opstamp:  opStamp,
 	}
-	if err := index.SaveMetas(indexMeta, directory); err != nil {
+	if err := index.SaveMeta(indexMeta, directory); err != nil {
 		return err
 	}
 	s.storeMeta(indexMeta)
@@ -59,7 +69,94 @@ func (s *SegmentUpdater) saveMetas(opStamp opstamp.OpStamp) error {
 }
 
 func (s *SegmentUpdater) storeMeta(indexMeta *index.IndexMeta) {
-	s.Lock()
-	defer s.Unlock()
 	s.activeMeta = indexMeta
+}
+
+func (s *SegmentUpdater) considerMergeOptions() {
+	s.Lock()
+
+	curOpstamp := s.stamper.Stamp()
+	committedSegments, uncommittedSegments := s.mergeableSegments()
+
+	var mergeOperations []*MergeOperation
+	committedMergeCandidates := s.mergePolicy.ComputeMergeCandidates(committedSegments)
+	for _, segmentIDs := range committedMergeCandidates {
+		mergeOperations = append(mergeOperations, NewMergeOperation(curOpstamp, segmentIDs))
+		s.segmentIDsInMerge = append(s.segmentIDsInMerge, segmentIDs...)
+	}
+
+	uncommittedMergeCandidates := s.mergePolicy.ComputeMergeCandidates(uncommittedSegments)
+	for _, segmentIDs := range uncommittedMergeCandidates {
+		mergeOperations = append(mergeOperations, NewMergeOperation(s.activeMeta.Opstamp, segmentIDs))
+		s.segmentIDsInMerge = append(s.segmentIDsInMerge, segmentIDs...)
+	}
+	s.Unlock()
+
+	for _, mergeOperation := range mergeOperations {
+		if _, err := s.startMerge(mergeOperation); err != nil {
+			log.Printf("failed to merge: %v\n", err)
+		}
+	}
+}
+
+func (s *SegmentUpdater) mergeableSegments() ([]*index.SegmentMeta, []*index.SegmentMeta) {
+	return s.segmentManager.mergeableSegments(s.segmentIDsInMerge)
+}
+
+func (s *SegmentUpdater) startMerge(operation *MergeOperation) (*index.SegmentMeta, error) {
+	segmentEntries := s.segmentManager.segmentEntriesForMerge(operation.segmentIDs)
+	mergedSegmentEntry, err := merge(s.index, segmentEntries, operation.targetOpStamp)
+	if err != nil {
+		return nil, err
+	}
+
+	s.Lock()
+	segmentStatus := s.segmentManager.endMerge(operation.segmentIDs, mergedSegmentEntry)
+	if segmentStatus == SegmentStatusCommitted {
+		if err := s.saveMetas(s.activeMeta.Opstamp); err != nil {
+			return nil, err
+		}
+	}
+
+	newSegmentIDsInMerge := make([]index.SegmentID, 0, len(s.segmentIDsInMerge))
+	processedSegmentIDMap := make(map[index.SegmentID]struct{})
+	for _, segmentID := range operation.segmentIDs {
+		processedSegmentIDMap[segmentID] = struct{}{}
+	}
+	for _, segmentID := range s.segmentIDsInMerge {
+		if _, ok := processedSegmentIDMap[segmentID]; !ok {
+			newSegmentIDsInMerge = append(newSegmentIDsInMerge, segmentID)
+		}
+	}
+	s.segmentIDsInMerge = newSegmentIDsInMerge
+	s.Unlock()
+
+	s.considerMergeOptions()
+	return mergedSegmentEntry.meta, nil
+}
+
+func merge(idx *index.Index, segmentEntries []*SegmentEntry, targetOpStamp opstamp.OpStamp) (*SegmentEntry, error) {
+	mergedSegment := idx.NewSegment()
+
+	segments := make([]*index.Segment, 0, len(segmentEntries))
+	for _, segmentEntry := range segmentEntries {
+		segments = append(segments, idx.Segment(segmentEntry.meta))
+	}
+
+	indexMerger, err := NewIndexMerger(idx.Schema(), segments)
+	if err != nil {
+		return nil, fmt.Errorf("initialize index merger: %w", err)
+	}
+
+	segmentSerializer, err := NewSegmentSerializer(mergedSegment)
+	if err != nil {
+		return nil, fmt.Errorf("initialize segment serializer: %w", err)
+	}
+	docNum, err := indexMerger.Write(segmentSerializer)
+	if err != nil {
+		return nil, fmt.Errorf("merger write: %w", err)
+	}
+
+	segmentMeta := idx.NewSegmentMeta(mergedSegment.Meta().SegmentID, docNum)
+	return NewSegmentEntry(segmentMeta), nil
 }

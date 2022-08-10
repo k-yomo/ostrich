@@ -5,7 +5,6 @@ import (
 	"github.com/k-yomo/ostrich/postings"
 	"github.com/k-yomo/ostrich/reader"
 	"github.com/k-yomo/ostrich/schema"
-	"io"
 )
 
 type TermQuery struct {
@@ -44,10 +43,7 @@ type TermWeight struct {
 }
 
 func (a *TermWeight) Scorer(segmentReader *reader.SegmentReader) (reader.Scorer, error) {
-	invertedIndexReader, err := segmentReader.InvertedIndex(a.fieldID)
-	if err != nil {
-		return nil, fmt.Errorf("initialize inverted index: %w", err)
-	}
+	invertedIndexReader := segmentReader.InvertedIndex(a.fieldID)
 	postingsReader, err := invertedIndexReader.ReadPostings(a.term)
 	if err != nil {
 		return nil, fmt.Errorf("read postings: %w", err)
@@ -64,7 +60,7 @@ func (a *TermWeight) ForEachPruning(threshold float64, segmentReader *reader.Seg
 		return fmt.Errorf("open scorer: %w", err)
 	}
 	doc, err := scorer.Doc()
-	for err != io.EOF {
+	for err == nil {
 		if score := scorer.Score(); score > threshold {
 			threshold = callback(doc, threshold)
 		}

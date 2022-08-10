@@ -34,9 +34,9 @@ type IndexWriter struct {
 }
 
 func NewIndexWriter(idx *index.Index, overallHeapBytes int) (*IndexWriter, error) {
-	indexMeta, err := idx.LoadMetas()
+	indexMeta, err := idx.LoadMeta()
 	if err != nil {
-		return nil, fmt.Errorf("load metas: %w", err)
+		return nil, fmt.Errorf("load meta: %w", err)
 	}
 
 	currentOpstamp := indexMeta.Opstamp
@@ -139,7 +139,16 @@ func (i *IndexWriter) indexDocuments(operations []*AddOperation) error {
 func (i *IndexWriter) Commit() (opstamp.OpStamp, error) {
 	i.operationBatcher.Flush()
 	commitOpstamp := i.stamper.Stamp()
-	return commitOpstamp, i.segmentUpdater.Commit(commitOpstamp)
+	if err := i.segmentUpdater.Commit(commitOpstamp); err != nil {
+		return 0, err
+	}
+	go i.segmentUpdater.considerMergeOptions()
+	return commitOpstamp, nil
+}
+
+func (i *IndexWriter) Merge(segmentIDs []index.SegmentID) (*index.SegmentMeta, error) {
+	operation := NewMergeOperation(i.segmentUpdater.activeMeta.Opstamp, segmentIDs)
+	return i.segmentUpdater.startMerge(operation)
 }
 
 func (i *IndexWriter) Close() error {

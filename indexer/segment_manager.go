@@ -6,8 +6,16 @@ import (
 	"github.com/k-yomo/ostrich/index"
 )
 
+type SegmentStatus int
+
+const (
+	SegmentStatusUnknown = iota
+	SegmentStatusUncommitted
+	SegmentStatusCommitted
+)
+
 type SegmentManager struct {
-	mu        sync.Mutex
+	mu        sync.RWMutex
 	registers *SegmentRegisters
 }
 
@@ -34,6 +42,9 @@ func (s *SegmentManager) addSegment(segmentEntry *SegmentEntry) {
 }
 
 func (s *SegmentManager) commit(segmentEntries []*SegmentEntry) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	s.registers.committed.clear()
 	s.registers.uncommitted.clear()
 	for _, segmentEntry := range segmentEntries {
@@ -52,4 +63,53 @@ func (s *SegmentManager) removeEmptySegments() {
 			s.registers.committed.removeSegmentEntry(segmentEntry.SegmentID())
 		}
 	}
+}
+
+func (s *SegmentManager) segmentStatus(segmentIDs []index.SegmentID) SegmentStatus {
+	if s.registers.committed.containsAll(segmentIDs) {
+		return SegmentStatusCommitted
+	} else if s.registers.uncommitted.containsAll(segmentIDs) {
+		return SegmentStatusUncommitted
+	} else {
+		return SegmentStatusUnknown
+	}
+}
+
+func (s *SegmentManager) targetRegister(status SegmentStatus) *SegmentRegister {
+	switch status {
+	case SegmentStatusCommitted:
+		return s.registers.committed
+	case SegmentStatusUncommitted:
+		return s.registers.uncommitted
+	default:
+		panic("no target register for unknown segment status")
+	}
+}
+
+func (s *SegmentManager) mergeableSegments(inMergeSegmentIDs []index.SegmentID) (commited []*index.SegmentMeta, uncommited []*index.SegmentMeta) {
+	return s.registers.committed.mergeableSegments(inMergeSegmentIDs),
+		s.registers.uncommitted.mergeableSegments(inMergeSegmentIDs)
+}
+
+func (s *SegmentManager) segmentEntriesForMerge(segmentIDs []index.SegmentID) []*SegmentEntry {
+	segmentEntries := make([]*SegmentEntry, 0, len(segmentIDs))
+	targetRegister := s.targetRegister(s.segmentStatus(segmentIDs))
+	for _, segmentID := range segmentIDs {
+		segmentEntries = append(segmentEntries, targetRegister.segmentStatus[segmentID])
+	}
+	return segmentEntries
+}
+
+func (s *SegmentManager) endMerge(beforeMergeSegmentIDs []index.SegmentID, mergedSegmentEntry *SegmentEntry) SegmentStatus {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	segmentStatus := s.segmentStatus(beforeMergeSegmentIDs)
+	targetRegister := s.targetRegister(segmentStatus)
+	for _, segmentID := range beforeMergeSegmentIDs {
+		targetRegister.removeSegmentEntry(segmentID)
+	}
+	targetRegister.addSegmentEntry(mergedSegmentEntry)
+
+	return segmentStatus
 }
