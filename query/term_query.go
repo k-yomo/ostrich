@@ -62,7 +62,7 @@ func (a *TermWeight) ForEachPruning(threshold float64, segmentReader *reader.Seg
 	doc, err := scorer.Doc()
 	for err == nil {
 		if score := scorer.Score(); score > threshold {
-			threshold = callback(doc, threshold)
+			threshold = callback(doc, score)
 		}
 		doc, err = scorer.Advance()
 	}

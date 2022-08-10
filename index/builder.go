@@ -41,7 +41,7 @@ func (b *Builder) OpenOrCreate(path string) (*Index, error) {
 		return nil, err
 	}
 	if exists {
-		return b.open(mmapDirectory)
+		return OpenIndex(mmapDirectory)
 	} else {
 		return b.create(mmapDirectory)
 	}
@@ -57,19 +57,6 @@ func (b *Builder) create(dir directory.Directory) (*Index, error) {
 	}
 	indexMeta := NewIndexMeta(b.schema)
 	return NewIndexFromMeta(managedDirectory, indexMeta, &SegmentMetaInventory{}), nil
-}
-
-func (b *Builder) open(dir directory.Directory) (*Index, error) {
-	managedDirectory, err := directory.NewManagedDirectory(dir)
-	if err != nil {
-		return nil, err
-	}
-	inventory := &SegmentMetaInventory{}
-	meta, err := LoadMeta(dir, inventory)
-	if err != nil {
-		return nil, err
-	}
-	return NewIndexFromMeta(managedDirectory, meta, inventory), nil
 }
 
 func (b *Builder) saveNewMeta(dir directory.Directory) error {

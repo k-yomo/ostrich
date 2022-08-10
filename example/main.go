@@ -9,6 +9,7 @@ import (
 	"github.com/k-yomo/ostrich/query"
 	"github.com/k-yomo/ostrich/reader"
 	"github.com/k-yomo/ostrich/schema"
+	"golang.org/x/sync/errgroup"
 )
 
 func main() {
@@ -61,13 +62,19 @@ func main() {
 		}},
 	}
 
-	for _, doc := range docs {
-		indexWriter.AddDocument(doc)
+	for i := 0; i < 100; i++ {
+		eg := errgroup.Group{}
+		for _, doc := range docs {
+			doc := doc
+			eg.Go(func() error {
+				return indexWriter.AddDocument(doc).Result()
+			})
+		}
+		if _, err := indexWriter.Commit(); err != nil {
+			panic(err)
+		}
+		eg.Wait()
 	}
-	if _, err := indexWriter.Commit(); err != nil {
-		panic(err)
-	}
-
 	indexReader, err := reader.NewIndexReader(idx)
 	if err != nil {
 		panic(err)

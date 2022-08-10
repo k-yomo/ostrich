@@ -24,6 +24,19 @@ func NewIndexFromMeta(directory directory.Directory, meta *IndexMeta, inventory 
 	}
 }
 
+func OpenIndex(dir directory.Directory) (*Index, error) {
+	managedDirectory, err := directory.NewManagedDirectory(dir)
+	if err != nil {
+		return nil, err
+	}
+	inventory := &SegmentMetaInventory{}
+	meta, err := LoadMeta(dir, inventory)
+	if err != nil {
+		return nil, err
+	}
+	return NewIndexFromMeta(managedDirectory, meta, inventory), nil
+}
+
 func (i *Index) LoadMeta() (*IndexMeta, error) {
 	return LoadMeta(i.directory, i.inventory)
 }
