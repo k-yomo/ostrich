@@ -6,7 +6,7 @@ require (
 	github.com/edsrzf/mmap-go v1.1.0
 	github.com/k-yomo/go-batch v0.1.0
 	github.com/kljensen/snowball v0.6.0
-	github.com/oklog/ulid/v2 v2.0.2
+	github.com/oklog/ulid/v2 v2.1.0
 	github.com/spf13/cobra v1.5.0
 )
 
