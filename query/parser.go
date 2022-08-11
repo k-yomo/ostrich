@@ -3,9 +3,10 @@ package query
 import (
 	"errors"
 	"fmt"
+	"strings"
+
 	"github.com/k-yomo/ostrich/reader"
 	"github.com/k-yomo/ostrich/schema"
-	"strings"
 )
 
 type Parser struct {

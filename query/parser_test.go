@@ -1,11 +1,12 @@
 package query
 
 import (
+	"reflect"
+	"testing"
+
 	"github.com/k-yomo/ostrich/analyzer"
 	"github.com/k-yomo/ostrich/reader"
 	"github.com/k-yomo/ostrich/schema"
-	"reflect"
-	"testing"
 )
 
 func TestParser_Parse(t *testing.T) {

@@ -2,6 +2,7 @@ package reader
 
 import (
 	"fmt"
+
 	"github.com/k-yomo/ostrich/directory"
 	"github.com/k-yomo/ostrich/index"
 	"github.com/k-yomo/ostrich/postings"

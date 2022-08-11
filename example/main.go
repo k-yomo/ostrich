@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+
 	"github.com/k-yomo/ostrich/analyzer"
 	"github.com/k-yomo/ostrich/collector"
 	"github.com/k-yomo/ostrich/index"
@@ -75,7 +76,7 @@ func main() {
 
 	searcher := indexReader.Searcher()
 
-	queryParser := query.NewParser(idx.Schema(), []schema.FieldID{phraseField, descriptionField})
+	queryParser := query.NewParser(idx.Schema(), idx.Schema().FieldIDs())
 	q, err := queryParser.Parse("phrase:hat OR description:serious")
 	if err != nil {
 		panic(err)

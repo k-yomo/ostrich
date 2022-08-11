@@ -2,6 +2,7 @@ package store
 
 import (
 	"encoding/json"
+
 	"github.com/k-yomo/ostrich/directory"
 	"github.com/k-yomo/ostrich/schema"
 )

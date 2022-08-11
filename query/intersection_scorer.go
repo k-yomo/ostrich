@@ -1,9 +1,10 @@
 package query
 
 import (
+	"sort"
+
 	"github.com/k-yomo/ostrich/reader"
 	"github.com/k-yomo/ostrich/schema"
-	"sort"
 )
 
 type InterSectionScorer struct {

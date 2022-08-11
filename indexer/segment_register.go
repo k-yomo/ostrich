@@ -1,9 +1,10 @@
 package indexer
 
 import (
+	"sort"
+
 	"github.com/k-yomo/ostrich/index"
 	"github.com/k-yomo/ostrich/pkg/list"
-	"sort"
 )
 
 type SegmentRegister struct {

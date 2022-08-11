@@ -2,11 +2,12 @@ package indexer
 
 import (
 	"fmt"
-	"github.com/k-yomo/ostrich/index"
-	"github.com/k-yomo/ostrich/internal/opstamp"
 	"log"
 	"sort"
 	"sync"
+
+	"github.com/k-yomo/ostrich/index"
+	"github.com/k-yomo/ostrich/internal/opstamp"
 )
 
 type SegmentUpdater struct {

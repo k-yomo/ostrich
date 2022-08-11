@@ -3,10 +3,11 @@ package index
 import (
 	"encoding/json"
 	"fmt"
+	"sync"
+
 	"github.com/k-yomo/ostrich/directory"
 	"github.com/k-yomo/ostrich/internal/opstamp"
 	"github.com/k-yomo/ostrich/schema"
-	"sync"
 )
 
 const metaFileName = "meta.json"

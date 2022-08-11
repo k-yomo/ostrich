@@ -3,6 +3,7 @@ package termdict
 import (
 	"encoding/gob"
 	"fmt"
+
 	"github.com/k-yomo/ostrich/directory"
 	"github.com/k-yomo/ostrich/schema"
 )

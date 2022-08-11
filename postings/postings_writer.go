@@ -3,6 +3,7 @@ package postings
 import (
 	"bytes"
 	"encoding/gob"
+
 	"github.com/k-yomo/ostrich/schema"
 	"github.com/k-yomo/ostrich/termdict"
 )

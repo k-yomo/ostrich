@@ -9,6 +9,7 @@ package main
 
 import (
 	"fmt"
+
 	"github.com/k-yomo/ostrich/analyzer"
 	"github.com/k-yomo/ostrich/collector"
 	"github.com/k-yomo/ostrich/index"

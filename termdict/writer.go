@@ -3,6 +3,7 @@ package termdict
 import (
 	"bytes"
 	"encoding/gob"
+
 	"github.com/k-yomo/ostrich/directory"
 	"github.com/k-yomo/ostrich/schema"
 )

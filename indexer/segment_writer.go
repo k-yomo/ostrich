@@ -2,6 +2,7 @@ package indexer
 
 import (
 	"fmt"
+
 	"github.com/k-yomo/ostrich/analyzer"
 	"github.com/k-yomo/ostrich/index"
 	"github.com/k-yomo/ostrich/internal/opstamp"

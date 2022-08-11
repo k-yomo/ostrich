@@ -1,9 +1,10 @@
 package indexer
 
 import (
-	"github.com/k-yomo/ostrich/index"
 	"math"
 	"sort"
+
+	"github.com/k-yomo/ostrich/index"
 )
 
 const DefaultLevelLogSize = 0.75

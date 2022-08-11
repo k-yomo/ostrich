@@ -2,6 +2,7 @@ package reader
 
 import (
 	"fmt"
+
 	"github.com/k-yomo/ostrich/index"
 )
 

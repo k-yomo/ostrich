@@ -1,11 +1,12 @@
 package collector
 
 import (
+	"math"
+
 	"github.com/k-yomo/ostrich/index"
 	"github.com/k-yomo/ostrich/pkg/heap"
 	"github.com/k-yomo/ostrich/reader"
 	"github.com/k-yomo/ostrich/schema"
-	"math"
 )
 
 type TopDocsCollector struct {

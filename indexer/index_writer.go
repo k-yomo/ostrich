@@ -3,10 +3,11 @@ package indexer
 import (
 	"errors"
 	"fmt"
-	"github.com/k-yomo/go-batch"
 	"math"
 	"runtime"
 	"unsafe"
+
+	"github.com/k-yomo/go-batch"
 
 	"github.com/k-yomo/ostrich/index"
 	"github.com/k-yomo/ostrich/internal/opstamp"
