@@ -2,6 +2,7 @@ package indexer
 
 import (
 	"sort"
+	"sync"
 
 	"github.com/k-yomo/ostrich/index"
 	"github.com/k-yomo/ostrich/pkg/list"
@@ -9,6 +10,7 @@ import (
 
 type SegmentRegister struct {
 	segmentStatus map[index.SegmentID]*SegmentEntry
+	mu            *sync.Mutex
 }
 
 func newSegmentRegister() *SegmentRegister {
@@ -67,11 +69,17 @@ func (s *SegmentRegister) containsAll(segmentIDs []index.SegmentID) bool {
 }
 
 func (s *SegmentRegister) addSegmentEntry(segmentEntry *SegmentEntry) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	segmentID := segmentEntry.SegmentID()
 	s.segmentStatus[segmentID] = segmentEntry
 }
 
 func (s *SegmentRegister) removeSegmentEntry(segmentID index.SegmentID) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	delete(s.segmentStatus, segmentID)
 }
 
