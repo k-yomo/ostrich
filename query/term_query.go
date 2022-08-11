@@ -8,13 +8,13 @@ import (
 )
 
 type TermQuery struct {
-	fieldID schema.FieldID
-	term    *schema.Term
+	FieldID schema.FieldID
+	Term    *schema.Term
 }
 
 func NewTermQuery(term *schema.Term) reader.Query {
 	return &TermQuery{
-		term: term,
+		Term: term,
 	}
 }
 
@@ -23,13 +23,13 @@ func (a *TermQuery) Weight(searcher *reader.Searcher, _ bool) (reader.Weight, er
 	for _, segmentReader := range searcher.SegmentReaders() {
 		totalDocNum += uint64(segmentReader.MaxDoc)
 	}
-	docFrequency, err := searcher.DocFreq(a.fieldID, a.term.Text())
+	docFrequency, err := searcher.DocFreq(a.FieldID, a.Term.Text())
 	if err != nil {
 		return nil, fmt.Errorf("get doc frequency: %w", err)
 	}
 
 	return &TermWeight{
-		term:             a.term,
+		term:             a.Term,
 		similarityWeight: NewTFIDFWeight(totalDocNum, docFrequency),
 	}, nil
 }

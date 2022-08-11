@@ -82,13 +82,12 @@ func main() {
 
 	searcher := indexReader.Searcher()
 
-	term1 := schema.NewTermFromText(phraseField, "hat")
-	term2 := schema.NewTermFromText(descriptionField, "serious")
-	termQuery := query.NewBooleanQuery([]*query.BooleanSubQuery{
-		query.NewBooleanSubQuery(query.OccurShould, query.NewTermQuery(term1)),
-		query.NewBooleanSubQuery(query.OccurShould, query.NewTermQuery(term2)),
-	})
-	hits, err := reader.Search(searcher, termQuery, collector.NewTopDocsCollector(10, 0))
+	queryParser := query.NewParser(idx.Schema(), []schema.FieldID{phraseField, descriptionField})
+	q, err := queryParser.Parse("phrase:hat OR description:serious")
+	if err != nil {
+		panic(err)
+	}
+	hits, err := reader.Search(searcher, q, collector.NewTopDocsCollector(10, 0))
 	if err != nil {
 		panic(err)
 	}
