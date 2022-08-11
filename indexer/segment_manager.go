@@ -86,7 +86,7 @@ func (s *SegmentManager) targetRegister(status SegmentStatus) *SegmentRegister {
 	}
 }
 
-func (s *SegmentManager) mergeableSegments(inMergeSegmentIDs []index.SegmentID) (commited []*index.SegmentMeta, uncommited []*index.SegmentMeta) {
+func (s *SegmentManager) mergeableSegments(inMergeSegmentIDs []index.SegmentID) (committed []*index.SegmentMeta, uncommitted []*index.SegmentMeta) {
 	return s.registers.committed.mergeableSegments(inMergeSegmentIDs),
 		s.registers.uncommitted.mergeableSegments(inMergeSegmentIDs)
 }

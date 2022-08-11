@@ -1,4 +1,9 @@
 # ostrich
+
+![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
+[![Test](https://github.com/k-yomo/ostrich/actions/workflows/test.yml/badge.svg)](https://github.com/k-yomo/ostrich/actions/workflows/test.yml)
+[![Go Report Card](https://goreportcard.com/badge/k-yomo/ostrich)](https://goreportcard.com/report/k-yomo/ostrich)
+
 Full text search engine library written in Go heavily inspired by Tantivy
 
 ※ This library is not production ready, don't use it in production.
