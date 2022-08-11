@@ -3,6 +3,7 @@ package postings
 import (
 	"bytes"
 	"encoding/gob"
+	"fmt"
 
 	"github.com/k-yomo/ostrich/schema"
 	"github.com/k-yomo/ostrich/termdict"
@@ -45,7 +46,7 @@ func (m *PerFieldPostingsWriter) Serialize(serializer *InvertedIndexSerializer) 
 		postingsWriter := m.PostingsWriterForFiled(field.ID)
 		writtenBytes, err := postingsWriter.Serialize(serializer, offset)
 		if err != nil {
-			return err
+			return fmt.Errorf("serialize per field postings: %w", err)
 		}
 		offset += writtenBytes
 	}

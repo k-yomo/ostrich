@@ -19,7 +19,7 @@ type ASTNode struct {
 	Value interface{}
 }
 
-func NewBinaryNode(kind NodeKind, left *ASTNode, right *ASTNode) *ASTNode {
+func NewLogicalOperationNode(kind NodeKind, left *ASTNode, right *ASTNode) *ASTNode {
 	return &ASTNode{
 		Kind:  kind,
 		Left:  left,

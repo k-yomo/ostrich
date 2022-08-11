@@ -26,19 +26,19 @@ func newSearchCmd(out io.Writer) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			limit, err := cmd.Flags().GetInt(flagNameLimit)
 			if err != nil {
-				return err
+				return fmt.Errorf("get limit flag: %w", err)
 			}
 			dir, err := directory.NewMMapDirectory(indexPath)
 			if err != nil {
-				return err
+				return fmt.Errorf("initialize mmap directory: %w", err)
 			}
 			idx, err := index.OpenIndex(dir)
 			if err != nil {
-				return err
+				return fmt.Errorf("open index: %w", err)
 			}
 			indexReader, err := reader.NewIndexReader(idx)
 			if err != nil {
-				return err
+				return fmt.Errorf("open index reader: %w", err)
 			}
 			searcher := indexReader.Searcher()
 
@@ -46,11 +46,11 @@ func newSearchCmd(out io.Writer) *cobra.Command {
 			queryParser := query.NewParser(idx.Schema(), idx.Schema().FieldIDs())
 			q, err := queryParser.Parse(args[0])
 			if err != nil {
-				return err
+				return fmt.Errorf("parse query: %w", err)
 			}
 			hits, err := reader.Search(searcher, q, collector.NewTopDocsCollector(limit, 0))
 			if err != nil {
-				return err
+				return fmt.Errorf("search: %w", err)
 			}
 			elapsedTime := time.Since(start).String()
 

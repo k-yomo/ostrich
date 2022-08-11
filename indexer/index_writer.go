@@ -118,16 +118,16 @@ func (i *IndexWriter) indexDocuments(operations []*AddOperation) error {
 	indexSchema := segment.Schema()
 	segmentWriter, err := newSegmentWriter(segment, indexSchema)
 	if err != nil {
-		return err
+		return fmt.Errorf("initialize segment writer: %w", err)
 	}
 	for _, op := range operations {
 		if err := segmentWriter.addDocument(op, indexSchema); err != nil {
-			return err
+			return fmt.Errorf("add document: %w", err)
 		}
 	}
 
 	if err := segmentWriter.finalize(); err != nil {
-		return err
+		return fmt.Errorf("finalize segment: %w", err)
 	}
 
 	segmentWithMaxDoc := segment.WithMaxDoc(segmentWriter.maxDoc)

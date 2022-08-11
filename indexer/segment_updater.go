@@ -62,7 +62,7 @@ func (s *SegmentUpdater) saveMetas(opStamp opstamp.OpStamp) error {
 		Opstamp:  opStamp,
 	}
 	if err := index.SaveMeta(indexMeta, directory); err != nil {
-		return err
+		return fmt.Errorf("save meta: %w", err)
 	}
 	s.storeMeta(indexMeta)
 

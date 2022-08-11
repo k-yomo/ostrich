@@ -1,6 +1,8 @@
 package query
 
 import (
+	"fmt"
+
 	"github.com/k-yomo/ostrich/index"
 	"github.com/k-yomo/ostrich/reader"
 	"github.com/k-yomo/ostrich/schema"
@@ -30,7 +32,7 @@ func (a *AllWeight) Scorer(segmentReader *reader.SegmentReader) (reader.Scorer, 
 func (a *AllWeight) ForEachPruning(threshold float64, segmentReader *reader.SegmentReader, callback func(docID schema.DocID, score float64) float64) error {
 	scorer, err := a.Scorer(segmentReader)
 	if err != nil {
-		return err
+		return fmt.Errorf("get scorer: %v", err)
 	}
 	doc := scorer.Doc()
 	for !doc.IsTerminated() {

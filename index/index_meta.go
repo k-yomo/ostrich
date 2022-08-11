@@ -88,7 +88,7 @@ func (i *SegmentMetaInventory) NewSegmentMeta(segmentID SegmentID, maxDoc schema
 func SaveMeta(meta *IndexMeta, dir directory.Directory) error {
 	metaJSON, err := json.Marshal(meta)
 	if err != nil {
-		return err
+		return fmt.Errorf("marshal index meta: %w", err)
 	}
 	return dir.AtomicWrite(metaFileName, metaJSON)
 }

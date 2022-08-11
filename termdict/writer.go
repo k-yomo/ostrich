@@ -3,6 +3,7 @@ package termdict
 import (
 	"bytes"
 	"encoding/gob"
+	"fmt"
 
 	"github.com/k-yomo/ostrich/directory"
 	"github.com/k-yomo/ostrich/schema"
@@ -30,10 +31,10 @@ func (t *TermWriter) AddTermInfo(fieldID schema.FieldID, termInfo *TermInfo) {
 func (t *TermWriter) Serialize() error {
 	b := bytes.NewBuffer([]byte{})
 	if err := gob.NewEncoder(b).Encode(t.termInfos); err != nil {
-		return err
+		return fmt.Errorf("encode termInfos: %w", err)
 	}
 	if _, err := t.termDictFile.Write(b.Bytes()); err != nil {
-		return err
+		return fmt.Errorf("write termdict: %w", err)
 	}
 	return nil
 }

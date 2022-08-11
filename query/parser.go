@@ -63,21 +63,21 @@ func (p *Parser) expr(tokens []string) (*ASTNode, []string, error) {
 			if err != nil {
 				return nil, nil, err
 			}
-			node = NewBinaryNode(NodeKindAnd, node, right)
+			node = NewLogicalOperationNode(NodeKindAnd, node, right)
 			next = nextTokens
 		case "or":
 			right, nextTokens, err := p.primary(next[1:])
 			if err != nil {
 				return nil, nil, err
 			}
-			node = NewBinaryNode(NodeKindOr, node, right)
+			node = NewLogicalOperationNode(NodeKindOr, node, right)
 			next = nextTokens
 		default:
 			right, nextTokens, err := p.primary(next)
 			if err != nil {
 				return nil, nil, err
 			}
-			node = NewBinaryNode(NodeKindOr, node, right)
+			node = NewLogicalOperationNode(NodeKindOr, node, right)
 			next = nextTokens
 		}
 	}

@@ -3,6 +3,7 @@ package directory
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/fs"
 	"strings"
 	"sync"
@@ -80,7 +81,7 @@ func (m *ManagedDirectory) OpenWrite(path string) (WriteCloseSyncer, error) {
 }
 func (m *ManagedDirectory) AtomicWrite(path string, data []byte) error {
 	if err := m.registerFileAsManaged(path); err != nil {
-		return err
+		return fmt.Errorf("register file: %w", err)
 	}
 	return m.directory.AtomicWrite(path, data)
 }
@@ -103,11 +104,11 @@ func (m *ManagedDirectory) registerFileAsManaged(path string) error {
 	managedPathsJSON, err := json.Marshal(m.MetaInformation.ManagedPaths)
 	if err != nil {
 		m.MetaInformation.RemovePath(path)
-		return err
+		return fmt.Errorf("marshal managed paths: %w", err)
 	}
 	if err := m.directory.AtomicWrite(managedFilePath, managedPathsJSON); err != nil {
 		m.MetaInformation.RemovePath(path)
-		return err
+		return fmt.Errorf("write managed paths: %w", err)
 	}
 
 	return nil

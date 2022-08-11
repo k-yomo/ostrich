@@ -40,9 +40,9 @@ func (m *mmapDirectory) OpenRead(path string) (*FileSlice, error) {
 	closeFunc := func() error {
 		err := mem.Unmap()
 		if err := f.Close(); err != nil {
-			return err
+			return fmt.Errorf("close file: %w", err)
 		}
-		return err
+		return fmt.Errorf("unmap: %w", err)
 	}
 	return NewFileSlice(bytes.NewReader(mem), closeFunc), nil
 }
@@ -72,12 +72,14 @@ func (m *mmapDirectory) OpenWrite(path string) (WriteCloseSyncer, error) {
 func (m *mmapDirectory) AtomicWrite(path string, data []byte) error {
 	f, err := os.Create(m.buildPath(path))
 	if err != nil {
-		return err
+		return fmt.Errorf("create file: %w", err)
 	}
 	defer f.Close()
 
-	_, err = f.Write(data)
-	return err
+	if _, err = f.Write(data); err != nil {
+		return fmt.Errorf("atomic write: %w", err)
+	}
+	return nil
 }
 
 func (m *mmapDirectory) Exists(path string) (bool, error) {

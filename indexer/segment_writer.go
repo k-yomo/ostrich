@@ -59,7 +59,7 @@ func (s *SegmentWriter) addDocument(addOperation *AddOperation, sc *schema.Schem
 
 	docWriter := s.segmentSerializer.StoreWriter
 	if err := docWriter.Store(doc); err != nil {
-		return err
+		return fmt.Errorf("store document: %w", err)
 	}
 	s.maxDoc++
 
@@ -69,7 +69,7 @@ func (s *SegmentWriter) addDocument(addOperation *AddOperation, sc *schema.Schem
 func (s *SegmentWriter) finalize() error {
 	err := s.perFieldPostingsWriter.Serialize(s.segmentSerializer.PostingsSerializer)
 	if err != nil {
-		return err
+		return fmt.Errorf("serialize postings: %w", err)
 	}
 	if err := s.segmentSerializer.StoreWriter.Close(); err != nil {
 		return err

@@ -1,6 +1,8 @@
 package query
 
 import (
+	"fmt"
+
 	"github.com/k-yomo/ostrich/reader"
 	"github.com/k-yomo/ostrich/schema"
 )
@@ -113,7 +115,7 @@ func (b *BooleanWeight) Scorer(segmentReader *reader.SegmentReader) (reader.Scor
 func (b *BooleanWeight) ForEachPruning(threshold float64, segmentReader *reader.SegmentReader, callback func(docID schema.DocID, score float64) float64) error {
 	scorerWrapper, err := b.booleanScorerWrapper(segmentReader)
 	if err != nil {
-		return err
+		return fmt.Errorf("initialize boolean score wrapper: %w", err)
 	}
 	if scorerWrapper.IsTermUnion() {
 		// TODO: use specialized method to do WAND
