@@ -2,15 +2,15 @@ package cmd
 
 import (
 	"fmt"
+	"io"
+	"time"
+
 	"github.com/k-yomo/ostrich/collector"
 	"github.com/k-yomo/ostrich/directory"
 	"github.com/k-yomo/ostrich/index"
 	"github.com/k-yomo/ostrich/query"
 	"github.com/k-yomo/ostrich/reader"
-	"github.com/k-yomo/ostrich/schema"
 	"github.com/spf13/cobra"
-	"io"
-	"time"
 )
 
 // newSearchCmd returns the command to search index
@@ -43,14 +43,17 @@ func newSearchCmd(out io.Writer) *cobra.Command {
 			searcher := indexReader.Searcher()
 
 			start := time.Now()
-			// TODO: fix to use query parser
-			term := schema.NewTermFromText(idx.Schema().Fields[0].ID, args[0])
-			termQuery := query.NewTermQuery(term)
-			hits, err := reader.Search(searcher, termQuery, collector.NewTopDocsCollector(limit, 0))
+			queryParser := query.NewParser(idx.Schema(), idx.Schema().FieldIDs())
+			q, err := queryParser.Parse(args[0])
 			if err != nil {
-				panic(err)
+				return err
+			}
+			hits, err := reader.Search(searcher, q, collector.NewTopDocsCollector(limit, 0))
+			if err != nil {
+				return err
 			}
 			elapsedTime := time.Since(start).String()
+
 			for _, hit := range hits {
 				out.Write([]byte(fmt.Sprintf("docAddress: %+v, score: %.6f\n", hit.DocAddress, hit.Score)))
 			}
