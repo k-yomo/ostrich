@@ -20,10 +20,7 @@ func TestParser_Parse(t *testing.T) {
 		want    reader.Query
 		wantErr bool
 	}{
-		{
-			name:  "field specified union query",
-			query: "f1:abc OR f2:def",
-		},
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
