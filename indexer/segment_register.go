@@ -10,7 +10,7 @@ import (
 
 type SegmentRegister struct {
 	segmentStatus map[index.SegmentID]*SegmentEntry
-	mu            *sync.Mutex
+	mu            sync.Mutex
 }
 
 func newSegmentRegister() *SegmentRegister {
