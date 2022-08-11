@@ -1,9 +1,6 @@
 package store
 
 import (
-	"encoding/json"
-	"fmt"
-
 	"github.com/k-yomo/ostrich/directory"
 	"github.com/k-yomo/ostrich/schema"
 )
@@ -21,15 +18,15 @@ func NewStoreWriter(writer directory.WriteCloseSyncer) *StoreWriter {
 	}
 }
 
+// TODO: implement
 func (s *StoreWriter) Store(document *schema.Document) error {
-	docJSON, err := json.Marshal(document)
-	if err != nil {
-		return fmt.Errorf("marshal document: %w", err)
-	}
-	// TODO: makes it possible to read
-	if _, err := s.writer.Write(docJSON); err != nil {
-		return fmt.Errorf("write document: %w", err)
-	}
+	// docJSON, err := json.Marshal(document)
+	// if err != nil {
+	// 	return fmt.Errorf("marshal document: %w", err)
+	// }
+	// if _, err := s.writer.Write(docJSON); err != nil {
+	// 	return fmt.Errorf("write document: %w", err)
+	// }
 	s.doc++
 
 	return nil
