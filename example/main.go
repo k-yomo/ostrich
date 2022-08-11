@@ -9,7 +9,6 @@ import (
 	"github.com/k-yomo/ostrich/query"
 	"github.com/k-yomo/ostrich/reader"
 	"github.com/k-yomo/ostrich/schema"
-	"golang.org/x/sync/errgroup"
 )
 
 func main() {
@@ -62,18 +61,11 @@ func main() {
 		}},
 	}
 
-	for i := 0; i < 100; i++ {
-		eg := errgroup.Group{}
-		for _, doc := range docs {
-			doc := doc
-			eg.Go(func() error {
-				return indexWriter.AddDocument(doc).Result()
-			})
-		}
-		if _, err := indexWriter.Commit(); err != nil {
-			panic(err)
-		}
-		eg.Wait()
+	for _, doc := range docs {
+		indexWriter.AddDocument(doc)
+	}
+	if _, err := indexWriter.Commit(); err != nil {
+		panic(err)
 	}
 	indexReader, err := reader.NewIndexReader(idx)
 	if err != nil {
@@ -83,7 +75,12 @@ func main() {
 
 	searcher := indexReader.Searcher()
 
-	termQuery := query.NewTermQuery(phraseField, "hat")
+	term1 := schema.NewTermFromText(phraseField, "hat")
+	term2 := schema.NewTermFromText(descriptionField, "serious")
+	termQuery := query.NewBooleanQuery([]*query.BooleanSubQuery{
+		query.NewBooleanSubQuery(query.OccurShould, query.NewTermQuery(term1)),
+		query.NewBooleanSubQuery(query.OccurShould, query.NewTermQuery(term2)),
+	})
 	hits, err := reader.Search(searcher, termQuery, collector.NewTopDocsCollector(10, 0))
 	if err != nil {
 		panic(err)

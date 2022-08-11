@@ -9,13 +9,12 @@ import (
 
 type TermQuery struct {
 	fieldID schema.FieldID
-	term    string
+	term    *schema.Term
 }
 
-func NewTermQuery(fieldID schema.FieldID, term string) reader.Query {
+func NewTermQuery(term *schema.Term) reader.Query {
 	return &TermQuery{
-		fieldID: fieldID,
-		term:    term,
+		term: term,
 	}
 }
 
@@ -24,27 +23,25 @@ func (a *TermQuery) Weight(searcher *reader.Searcher, _ bool) (reader.Weight, er
 	for _, segmentReader := range searcher.SegmentReaders() {
 		totalDocNum += uint64(segmentReader.MaxDoc)
 	}
-	docFrequency, err := searcher.DocFreq(a.fieldID, a.term)
+	docFrequency, err := searcher.DocFreq(a.fieldID, a.term.Text())
 	if err != nil {
 		return nil, fmt.Errorf("get doc frequency: %w", err)
 	}
 
 	return &TermWeight{
-		fieldID:          a.fieldID,
 		term:             a.term,
 		similarityWeight: NewTFIDFWeight(totalDocNum, docFrequency),
 	}, nil
 }
 
 type TermWeight struct {
-	fieldID          schema.FieldID
-	term             string
+	term             *schema.Term
 	similarityWeight *TfIDFWeight
 }
 
 func (a *TermWeight) Scorer(segmentReader *reader.SegmentReader) (reader.Scorer, error) {
-	invertedIndexReader := segmentReader.InvertedIndex(a.fieldID)
-	postingsReader, err := invertedIndexReader.ReadPostings(a.term)
+	invertedIndexReader := segmentReader.InvertedIndex(a.term.FieldID())
+	postingsReader, err := invertedIndexReader.ReadPostings(a.term.Text())
 	if err != nil {
 		return nil, fmt.Errorf("read postings: %w", err)
 	}
@@ -59,12 +56,12 @@ func (a *TermWeight) ForEachPruning(threshold float64, segmentReader *reader.Seg
 	if err != nil {
 		return fmt.Errorf("open scorer: %w", err)
 	}
-	doc, err := scorer.Doc()
-	for err == nil {
+	doc := scorer.Doc()
+	for !doc.IsTerminated() {
 		if score := scorer.Score(); score > threshold {
 			threshold = callback(doc, score)
 		}
-		doc, err = scorer.Advance()
+		doc = scorer.Advance()
 	}
 
 	return nil
@@ -75,12 +72,20 @@ type TermScorer struct {
 	similarityWeight *TfIDFWeight
 }
 
-func (a *TermScorer) Advance() (schema.DocID, error) {
+func (a *TermScorer) Advance() schema.DocID {
 	return a.postingsReader.Advance()
 }
 
-func (a *TermScorer) Doc() (schema.DocID, error) {
+func (a *TermScorer) Doc() schema.DocID {
 	return a.postingsReader.Doc()
+}
+
+func (a *TermScorer) Seek(target schema.DocID) schema.DocID {
+	return a.postingsReader.Seek(target)
+}
+
+func (a *TermScorer) SizeHint() uint32 {
+	return a.postingsReader.SizeHint()
 }
 
 func (a *TermScorer) TermFreq() uint64 {

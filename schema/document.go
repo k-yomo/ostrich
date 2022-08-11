@@ -1,8 +1,17 @@
 package schema
 
-import "sort"
+import (
+	"math"
+	"sort"
+)
 
 type DocID uint32
+
+const DocIDTerminated DocID = math.MaxUint32
+
+func (d DocID) IsTerminated() bool {
+	return d == DocIDTerminated
+}
 
 type Document struct {
 	FieldValues []*FieldValue

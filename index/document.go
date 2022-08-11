@@ -12,6 +12,16 @@ type DocAddress struct {
 }
 
 type DocSet interface {
-	Advance() (schema.DocID, error)
-	Doc() (schema.DocID, error)
+	Advance() schema.DocID
+	Doc() schema.DocID
+	Seek(target schema.DocID) schema.DocID
+	SizeHint() uint32
+}
+
+func SeekDocSet(docSet DocSet, target schema.DocID) schema.DocID {
+	doc := docSet.Doc()
+	for doc < target {
+		doc = docSet.Advance()
+	}
+	return doc
 }

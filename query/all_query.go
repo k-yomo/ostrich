@@ -1,9 +1,9 @@
 package query
 
 import (
+	"github.com/k-yomo/ostrich/index"
 	"github.com/k-yomo/ostrich/reader"
 	"github.com/k-yomo/ostrich/schema"
-	"io"
 )
 
 type AllQuery struct {
@@ -29,15 +29,15 @@ func (a *AllWeight) Scorer(segmentReader *reader.SegmentReader) (reader.Scorer, 
 
 func (a *AllWeight) ForEachPruning(threshold float64, segmentReader *reader.SegmentReader, callback func(docID schema.DocID, score float64) float64) error {
 	scorer, err := a.Scorer(segmentReader)
-	doc, err := scorer.Doc()
-	for err == nil {
+	if err != nil {
+		return err
+	}
+	doc := scorer.Doc()
+	for !doc.IsTerminated() {
 		if score := scorer.Score(); score > threshold {
 			threshold = callback(doc, threshold)
 		}
-		doc, err = scorer.Advance()
-	}
-	if err != io.EOF {
-		return err
+		doc = scorer.Advance()
 	}
 	return nil
 }
@@ -47,18 +47,26 @@ type AllScorer struct {
 	maxDoc schema.DocID
 }
 
-func (a *AllScorer) Advance() (schema.DocID, error) {
+func (a *AllScorer) Advance() schema.DocID {
 	if a.doc < a.maxDoc {
 		a.doc += 1
 	}
 	return a.Doc()
 }
 
-func (a *AllScorer) Doc() (schema.DocID, error) {
+func (a *AllScorer) Doc() schema.DocID {
 	if a.doc >= a.maxDoc {
-		return 0, io.EOF
+		return schema.DocIDTerminated
 	}
-	return a.doc, nil
+	return a.doc
+}
+
+func (a *AllScorer) Seek(target schema.DocID) schema.DocID {
+	return index.SeekDocSet(a, target)
+}
+
+func (a *AllScorer) SizeHint() uint32 {
+	return uint32(a.maxDoc)
 }
 
 func (a *AllScorer) Score() float64 {

@@ -20,11 +20,11 @@ import (
 
 func main() {
 	schemaBuilder := schema.NewBuilder()
-	englishAnalyzer := analyzer.NewEnglishAnalyzer()
-	phraseField := schemaBuilder.AddTextField("phrase", englishAnalyzer)
-	descriptionField := schemaBuilder.AddTextField("description", englishAnalyzer)
+	analyzer.Register("en_stem", analyzer.NewEnglishAnalyzer())
+	phraseField := schemaBuilder.AddTextField("phrase", "en_stem")
+	descriptionField := schemaBuilder.AddTextField("description", "en_stem")
 
-	idx, err := index.NewBuilder(schemaBuilder.Build()).CreateInDir("tmp")
+	idx, err := index.NewBuilder(schemaBuilder.Build()).OpenOrCreate("tmp")
 	if err != nil {
 		panic(err)
 	}
@@ -71,11 +71,9 @@ func main() {
 	for _, doc := range docs {
 		indexWriter.AddDocument(doc)
 	}
-
 	if _, err := indexWriter.Commit(); err != nil {
 		panic(err)
 	}
-
 	indexReader, err := reader.NewIndexReader(idx)
 	if err != nil {
 		panic(err)
@@ -84,7 +82,12 @@ func main() {
 
 	searcher := indexReader.Searcher()
 
-	termQuery := query.NewTermQuery(phraseField, "hat")
+	term1 := schema.NewTermFromText(phraseField, "hat")
+	term2 := schema.NewTermFromText(descriptionField, "serious")
+	termQuery := query.NewBooleanQuery([]*query.BooleanSubQuery{
+		query.NewBooleanSubQuery(query.OccurShould, query.NewTermQuery(term1)),
+		query.NewBooleanSubQuery(query.OccurShould, query.NewTermQuery(term2)),
+	})
 	hits, err := reader.Search(searcher, termQuery, collector.NewTopDocsCollector(10, 0))
 	if err != nil {
 		panic(err)
@@ -93,5 +96,4 @@ func main() {
 		fmt.Printf("docAddress: %+v, score: %v\n", hit.DocAddress, hit.Score)
 	}
 }
-
 ```

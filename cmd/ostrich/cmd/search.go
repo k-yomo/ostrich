@@ -7,6 +7,7 @@ import (
 	"github.com/k-yomo/ostrich/index"
 	"github.com/k-yomo/ostrich/query"
 	"github.com/k-yomo/ostrich/reader"
+	"github.com/k-yomo/ostrich/schema"
 	"github.com/spf13/cobra"
 	"io"
 	"time"
@@ -43,7 +44,8 @@ func newSearchCmd(out io.Writer) *cobra.Command {
 
 			start := time.Now()
 			// TODO: fix to use query parser
-			termQuery := query.NewTermQuery(idx.Schema().Fields[0].ID, args[0])
+			term := schema.NewTermFromText(idx.Schema().Fields[0].ID, args[0])
+			termQuery := query.NewTermQuery(term)
 			hits, err := reader.Search(searcher, termQuery, collector.NewTopDocsCollector(limit, 0))
 			if err != nil {
 				panic(err)

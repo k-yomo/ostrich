@@ -23,5 +23,5 @@ func (p *Parser) Parse(query string) reader.Query {
 	if query == "" {
 		return &AllQuery{}
 	}
-	return NewTermQuery(p.schema.Fields[0].ID, query)
+	return NewTermQuery(schema.NewTermFromText(p.schema.Fields[0].ID, query))
 }

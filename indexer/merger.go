@@ -6,7 +6,6 @@ import (
 	"github.com/k-yomo/ostrich/postings"
 	"github.com/k-yomo/ostrich/reader"
 	"github.com/k-yomo/ostrich/schema"
-	"io"
 )
 
 type IndexMerger struct {
@@ -65,15 +64,12 @@ func (i *IndexMerger) Write(serializer *SegmentSerializer) (schema.DocID, error)
 				if err != nil {
 					return 0, err
 				}
-				docID, err := postingsReader.Doc()
-				for err == nil {
+				docID := postingsReader.Doc()
+				for docID != schema.DocIDTerminated {
 					newDocID := oldToNewDocIDMap[segmentOrd][docID]
 					postingsWriter.AddTermFreq(term, newDocID, postingsReader.TermFreq())
 					termDocCount += 1
-					docID, err = postingsReader.Advance()
-				}
-				if err != io.EOF {
-					return 0, err
+					docID = postingsReader.Advance()
 				}
 			}
 		}

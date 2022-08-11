@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/k-yomo/ostrich/directory"
 	"github.com/k-yomo/ostrich/schema"
-	"io"
+	"sort"
 )
 
 type PostingsReader struct {
@@ -34,18 +34,33 @@ func NewPostingsReader(postingsFile *directory.FileSlice) (*PostingsReader, erro
 	return p, nil
 }
 
-func (p *PostingsReader) Advance() (schema.DocID, error) {
+func (p *PostingsReader) Advance() schema.DocID {
 	if p.curIdx < len(p.postingList) {
 		p.curIdx += 1
 	}
 	return p.Doc()
 }
 
-func (p *PostingsReader) Doc() (schema.DocID, error) {
+func (p *PostingsReader) Doc() schema.DocID {
 	if p.curIdx >= len(p.postingList) {
-		return 0, io.EOF
+		return schema.DocIDTerminated
 	}
-	return p.postingList[p.curIdx], nil
+	return p.postingList[p.curIdx]
+}
+
+func (p *PostingsReader) Seek(target schema.DocID) schema.DocID {
+	if p.Doc() >= target {
+		return p.Doc()
+	}
+	nextIndex := sort.Search(len(p.postingList[p.curIdx:]), func(i int) bool {
+		return p.postingList[i] >= target
+	})
+	p.curIdx = p.curIdx + nextIndex
+	return p.Doc()
+}
+
+func (p *PostingsReader) SizeHint() uint32 {
+	return uint32(len(p.postingList))
 }
 
 func (p *PostingsReader) TermFreq() uint64 {
