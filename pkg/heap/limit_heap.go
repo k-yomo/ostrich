@@ -10,8 +10,12 @@ func NewLimitHeap[T any](limit int, comp func(a, b T) bool) *LimitHeap[T] {
 }
 
 func (l *LimitHeap[T]) Push(v T) {
-	l.Heap.Push(v)
-	if l.Len() > l.limit {
-		_ = l.Heap.Pop()
+	if l.Len() < l.limit {
+		l.Heap.Push(v)
+	} else {
+		if last := l.Peek(); l.comp(v, *last) {
+			l.Heap.Push(v)
+			_ = l.Heap.Pop()
+		}
 	}
 }

@@ -80,7 +80,7 @@ func main() {
 		panic(err)
 	}
 	tupleCollector := collector.NewTupleCollector(
-		collector.NewTopDocsCollector(10, 0),
+		collector.NewTopScoreCollector(10, 0),
 		collector.NewCountCollector(),
 	)
 

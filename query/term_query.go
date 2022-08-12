@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/k-yomo/ostrich/internal/postings"
-
 	"github.com/k-yomo/ostrich/reader"
 	"github.com/k-yomo/ostrich/schema"
 )
