@@ -5,8 +5,9 @@ import (
 	"encoding/gob"
 	"fmt"
 
+	"github.com/k-yomo/ostrich/internal/termdict"
+
 	"github.com/k-yomo/ostrich/schema"
-	"github.com/k-yomo/ostrich/termdict"
 )
 
 type UnorderedTermId = uint64

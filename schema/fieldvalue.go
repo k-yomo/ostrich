@@ -9,5 +9,5 @@ type FieldAndFieldValues struct {
 
 type FieldValue struct {
 	FieldID FieldID
-	Value   Value
+	Value   interface{}
 }

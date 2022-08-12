@@ -3,8 +3,8 @@ package postings
 import (
 	"github.com/k-yomo/ostrich/directory"
 	"github.com/k-yomo/ostrich/index"
+	"github.com/k-yomo/ostrich/internal/termdict"
 	"github.com/k-yomo/ostrich/schema"
-	"github.com/k-yomo/ostrich/termdict"
 )
 
 type InvertedIndexSerializer struct {

@@ -2,7 +2,7 @@ package postings
 
 import (
 	"github.com/k-yomo/ostrich/directory"
-	"github.com/k-yomo/ostrich/termdict"
+	"github.com/k-yomo/ostrich/internal/termdict"
 )
 
 type InvertedIndexReader struct {

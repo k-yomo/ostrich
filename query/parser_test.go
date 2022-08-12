@@ -10,10 +10,10 @@ import (
 )
 
 func TestParser_Parse(t *testing.T) {
-	schemaBuilder := schema.NewBuilder()
-	f1 := schemaBuilder.AddTextField("f1", analyzer.DefaultAnalyzerName)
-	f2 := schemaBuilder.AddTextField("f2", analyzer.DefaultAnalyzerName)
-	parser := NewParser(schemaBuilder.Build(), []schema.FieldID{f1, f2})
+	indexSchema := schema.NewSchema()
+	f1 := indexSchema.AddTextField("f1", analyzer.DefaultAnalyzerName)
+	f2 := indexSchema.AddTextField("f2", analyzer.DefaultAnalyzerName)
+	parser := NewParser(indexSchema, []schema.FieldID{f1, f2})
 	tests := []struct {
 		name    string
 		query   string

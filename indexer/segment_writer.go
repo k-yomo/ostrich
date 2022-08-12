@@ -3,10 +3,11 @@ package indexer
 import (
 	"fmt"
 
+	"github.com/k-yomo/ostrich/internal/postings"
+
 	"github.com/k-yomo/ostrich/analyzer"
 	"github.com/k-yomo/ostrich/index"
 	"github.com/k-yomo/ostrich/internal/opstamp"
-	"github.com/k-yomo/ostrich/postings"
 	"github.com/k-yomo/ostrich/schema"
 )
 

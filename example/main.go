@@ -13,12 +13,12 @@ import (
 )
 
 func main() {
-	schemaBuilder := schema.NewBuilder()
+	indexSchema := schema.NewSchema()
 	analyzer.Register("en_stem", analyzer.NewEnglishAnalyzer())
-	phraseField := schemaBuilder.AddTextField("phrase", "en_stem")
-	descriptionField := schemaBuilder.AddTextField("description", "en_stem")
+	phraseField := indexSchema.AddTextField("phrase", "en_stem")
+	descriptionField := indexSchema.AddTextField("description", "en_stem")
 
-	idx, err := index.NewBuilder(schemaBuilder.Build()).OpenOrCreate("tmp")
+	idx, err := index.NewBuilder(indexSchema).OpenOrCreate("tmp")
 	if err != nil {
 		panic(err)
 	}

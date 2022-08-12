@@ -2,8 +2,8 @@ package indexer
 
 import (
 	"github.com/k-yomo/ostrich/index"
-	"github.com/k-yomo/ostrich/postings"
-	"github.com/k-yomo/ostrich/store"
+	"github.com/k-yomo/ostrich/internal/postings"
+	"github.com/k-yomo/ostrich/internal/store"
 )
 
 type SegmentSerializer struct {

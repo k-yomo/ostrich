@@ -3,11 +3,12 @@ package reader
 import (
 	"fmt"
 
+	"github.com/k-yomo/ostrich/internal/postings"
+	"github.com/k-yomo/ostrich/internal/termdict"
+
 	"github.com/k-yomo/ostrich/directory"
 	"github.com/k-yomo/ostrich/index"
-	"github.com/k-yomo/ostrich/postings"
 	"github.com/k-yomo/ostrich/schema"
-	"github.com/k-yomo/ostrich/termdict"
 )
 
 type SegmentReader struct {

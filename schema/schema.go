@@ -9,6 +9,17 @@ type Schema struct {
 	fieldMap map[string]*FieldEntry
 }
 
+func NewSchema() *Schema {
+	return &Schema{}
+}
+
+func (s *Schema) AddTextField(fieldName string, analyzerName string) FieldID {
+	field := FieldID(len(s.Fields))
+	fieldEntry := newFieldEntry(field, fieldName, FieldTypeText, analyzerName)
+	s.Fields = append(s.Fields, fieldEntry)
+	return field
+}
+
 func (s *Schema) FieldEntry(fieldID FieldID) *FieldEntry {
 	return s.Fields[fieldID]
 }
