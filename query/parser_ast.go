@@ -15,7 +15,7 @@ type ASTNode struct {
 	Left  *ASTNode
 	Right *ASTNode
 	// Value is the literal value
-	// For now, it's always *schema.Term or []*schema.Term
+	// For now, it's always []*schema.Term
 	Value interface{}
 }
 
@@ -24,13 +24,6 @@ func NewLogicalOperationNode(kind NodeKind, left *ASTNode, right *ASTNode) *ASTN
 		Kind:  kind,
 		Left:  left,
 		Right: right,
-	}
-}
-
-func NewTermNode(term *schema.Term) *ASTNode {
-	return &ASTNode{
-		Kind:  NodeKindLeaf,
-		Value: term,
 	}
 }
 

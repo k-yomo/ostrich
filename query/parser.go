@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/k-yomo/ostrich/analyzer"
 	"github.com/k-yomo/ostrich/reader"
 	"github.com/k-yomo/ostrich/schema"
 )
@@ -95,16 +96,25 @@ func (p *Parser) primary(tokens []string) (*ASTNode, []string, error) {
 		}
 		return node, rest[1:], nil
 	}
+
+	var terms []*schema.Term
 	if fieldTerm := strings.SplitN(tokens[0], ":", 2); len(fieldTerm) == 2 {
 		fieldName := fieldTerm[0]
 		term := fieldTerm[1]
 		if fieldID, ok := p.fieldNameMap[fieldName]; ok {
-			return NewTermNode(schema.NewTermFromText(fieldID, term)), tokens[1:], nil
+			analyzerName := p.schema.FieldEntry(fieldID).AnalyzerName
+			a, ok := analyzer.Get(analyzerName)
+			if !ok {
+				return nil, nil, fmt.Errorf("analyzer '%s' is not registered", analyzerName)
+			}
+			for _, term := range a.Analyze(term) {
+				terms = append(terms, schema.NewTermFromText(fieldID, term))
+			}
 		}
-	}
-	terms := make([]*schema.Term, 0, len(p.defaultFields))
-	for _, fieldID := range p.defaultFields {
-		terms = append(terms, schema.NewTermFromText(fieldID, tokens[0]))
+	} else {
+		for _, fieldID := range p.defaultFields {
+			terms = append(terms, schema.NewTermFromText(fieldID, tokens[0]))
+		}
 	}
 	return NewTermsNode(terms), tokens[1:], nil
 }
@@ -143,9 +153,10 @@ func astToQuery(node *ASTNode) reader.Query {
 		return NewBooleanUnionQuery([]reader.Query{astToQuery(node.Left), astToQuery(node.Right)})
 	default:
 		switch v := node.Value.(type) {
-		case *schema.Term:
-			return NewTermQuery(v)
 		case []*schema.Term:
+			if len(v) == 1 {
+				return NewTermQuery(v[0])
+			}
 			return NewMultiTermsQuery(v)
 		default:
 			panic(fmt.Sprintf("unexpected value: %+v", v))
