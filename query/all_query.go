@@ -29,19 +29,20 @@ func (a *AllWeight) Scorer(segmentReader *reader.SegmentReader) (reader.Scorer, 
 	}, nil
 }
 
+func (a *AllWeight) ForEach(segmentReader *reader.SegmentReader, callback func(docID schema.DocID, score float64)) error {
+	scorer, err := a.Scorer(segmentReader)
+	if err != nil {
+		return fmt.Errorf("get scorer: %v", err)
+	}
+	return ForEach(scorer, callback)
+}
+
 func (a *AllWeight) ForEachPruning(threshold float64, segmentReader *reader.SegmentReader, callback func(docID schema.DocID, score float64) float64) error {
 	scorer, err := a.Scorer(segmentReader)
 	if err != nil {
 		return fmt.Errorf("get scorer: %v", err)
 	}
-	doc := scorer.Doc()
-	for !doc.IsTerminated() {
-		if score := scorer.Score(); score > threshold {
-			threshold = callback(doc, threshold)
-		}
-		doc = scorer.Advance()
-	}
-	return nil
+	return ForEachPruning(scorer, threshold, callback)
 }
 
 type AllScorer struct {

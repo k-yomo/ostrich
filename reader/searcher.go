@@ -10,6 +10,12 @@ import (
 type Collector[T any] interface {
 	CollectSegment(w Weight, segmentOrd int, segmentReader *SegmentReader) (T, error)
 	MergeResults(results []T) T
+	SegmentCollector(segmentOrd int) SegmentCollector[T]
+}
+
+type SegmentCollector[T any] interface {
+	Collect(docID schema.DocID, score float64)
+	Result() T
 }
 
 type Query interface {
@@ -18,6 +24,7 @@ type Query interface {
 
 type Weight interface {
 	Scorer(segmentReader *SegmentReader) (Scorer, error)
+	ForEach(reader *SegmentReader, callback func(docID schema.DocID, score float64)) error
 	ForEachPruning(threshold float64, reader *SegmentReader, callback func(docID schema.DocID, score float64) float64) error
 }
 

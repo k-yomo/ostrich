@@ -74,17 +74,24 @@ func main() {
 	}
 	defer indexReader.Close()
 
-	searcher := indexReader.Searcher()
-
 	queryParser := query.NewParser(idx.Schema(), idx.Schema().FieldIDs())
 	q, err := queryParser.Parse("phrase:hat OR description:serious")
 	if err != nil {
 		panic(err)
 	}
-	hits, err := reader.Search(searcher, q, collector.NewTopDocsCollector(10, 0))
+	tupleCollector := collector.NewTupleCollector(
+		collector.NewTopDocsCollector(10, 0),
+		collector.NewCountCollector(),
+	)
+
+	searcher := indexReader.Searcher()
+	tupleResult, err := reader.Search(searcher, q, tupleCollector)
 	if err != nil {
 		panic(err)
 	}
+	hits := tupleResult.Left
+	count := tupleResult.Right
+	fmt.Println("total hit:", count)
 	for _, hit := range hits {
 		fmt.Printf("docAddress: %+v, score: %v\n", hit.DocAddress, hit.Score)
 	}

@@ -11,7 +11,7 @@ cover: test ## Run test with showing coverage
 
 .PHONY: fmt
 fmt: ## Format code
-	go fmt ./...
+	goimports -w .
 
 .PHONY: help
 help: ## Display this help screen

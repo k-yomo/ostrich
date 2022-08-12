@@ -101,15 +101,23 @@ func (b *BooleanWeight) Scorer(segmentReader *reader.SegmentReader) (reader.Scor
 	if len(b.subWeights) == 1 {
 		scorer, err := b.subWeights[0].weight.Scorer(segmentReader)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("initialize underlying scorer: %w", err)
 		}
 		return scorer, nil
 	}
 	booleanScorer, err := b.booleanScorerWrapper(segmentReader)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("initialize boolean score wrapper: %w", err)
 	}
 	return booleanScorer.Scorer(), nil
+}
+
+func (b *BooleanWeight) ForEach(segmentReader *reader.SegmentReader, callback func(docID schema.DocID, score float64)) error {
+	scorer, err := b.Scorer(segmentReader)
+	if err != nil {
+		return fmt.Errorf("initialize scorer: %w", err)
+	}
+	return ForEach(scorer, callback)
 }
 
 func (b *BooleanWeight) ForEachPruning(threshold float64, segmentReader *reader.SegmentReader, callback func(docID schema.DocID, score float64) float64) error {

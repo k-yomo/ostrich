@@ -31,6 +31,21 @@ func (h *Heap[T]) Peek() *T {
 	return &(h.data[h.Len()-1])
 }
 
+func (h *Heap[T]) TopN(n int, offset int) []T {
+	values := make([]T, 0, h.Len())
+	for i := 0; i < n; i++ {
+		if h.Len() == 0 {
+			break
+		}
+		v := h.Pop()
+		if i < offset {
+			continue
+		}
+		values = append(values, v)
+	}
+	return values
+}
+
 func (h *Heap[T]) swap(i, j int) {
 	h.data[i], h.data[j] = h.data[j], h.data[i]
 }

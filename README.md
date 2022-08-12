@@ -45,26 +45,6 @@ func main() {
 		{FieldValues: []*schema.FieldValue{
 			{
 				FieldID: phraseField,
-				Value:   "Down To The Wire",
-			},
-			{
-				FieldID: descriptionField,
-				Value:   "A tense situation where the outcome is decided only in the last few seconds.",
-			},
-		}},
-		{FieldValues: []*schema.FieldValue{
-			{
-				FieldID: phraseField,
-				Value:   "Eat My Hat",
-			},
-			{
-				FieldID: descriptionField,
-				Value:   "Having confidence in a specific outcome; being almost sure about something",
-			},
-		}},
-		{FieldValues: []*schema.FieldValue{
-			{
-				FieldID: phraseField,
 				Value:   "When the Rubber Hits the Road",
 			},
 			{
@@ -86,17 +66,25 @@ func main() {
 	}
 	defer indexReader.Close()
 
-	searcher := indexReader.Searcher()
-
-	queryParser := query.NewParser(idx.Schema(), []schema.FieldID{phraseField, descriptionField})
+	queryParser := query.NewParser(idx.Schema(), idx.Schema().FieldIDs())
 	q, err := queryParser.Parse("phrase:hat OR description:serious")
 	if err != nil {
 		panic(err)
 	}
-	hits, err := reader.Search(searcher, q, collector.NewTopDocsCollector(10, 0))
+	tupleCollector := collector.NewTupleCollector(
+		collector.NewTopDocsCollector(10, 0),
+		collector.NewCountCollector(),
+	)
+
+	searcher := indexReader.Searcher()
+	tupleResult, err := reader.Search(searcher, q, tupleCollector)
 	if err != nil {
 		panic(err)
 	}
+	
+	hits := tupleResult.Left
+	count := tupleResult.Right
+	fmt.Println("total hit:", count)
 	for _, hit := range hits {
 		fmt.Printf("docAddress: %+v, score: %v\n", hit.DocAddress, hit.Score)
 	}

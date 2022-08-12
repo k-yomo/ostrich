@@ -40,20 +40,28 @@ type TermWeight struct {
 	similarityWeight *TfIDFWeight
 }
 
-func (a *TermWeight) Scorer(segmentReader *reader.SegmentReader) (reader.Scorer, error) {
-	invertedIndexReader := segmentReader.InvertedIndex(a.term.FieldID())
-	postingsReader, err := invertedIndexReader.ReadPostings(a.term.Text())
+func (t *TermWeight) Scorer(segmentReader *reader.SegmentReader) (reader.Scorer, error) {
+	invertedIndexReader := segmentReader.InvertedIndex(t.term.FieldID())
+	postingsReader, err := invertedIndexReader.ReadPostings(t.term.Text())
 	if err != nil {
 		return nil, fmt.Errorf("read postings: %w", err)
 	}
 	return &TermScorer{
 		postingsReader:   postingsReader,
-		similarityWeight: a.similarityWeight,
+		similarityWeight: t.similarityWeight,
 	}, nil
 }
 
-func (a *TermWeight) ForEachPruning(threshold float64, segmentReader *reader.SegmentReader, callback func(docID schema.DocID, score float64) float64) error {
-	scorer, err := a.Scorer(segmentReader)
+func (t *TermWeight) ForEach(segmentReader *reader.SegmentReader, callback func(docID schema.DocID, score float64)) error {
+	scorer, err := t.Scorer(segmentReader)
+	if err != nil {
+		return fmt.Errorf("initialize scorer: %w", err)
+	}
+	return ForEach(scorer, callback)
+}
+
+func (t *TermWeight) ForEachPruning(threshold float64, segmentReader *reader.SegmentReader, callback func(docID schema.DocID, score float64) float64) error {
+	scorer, err := t.Scorer(segmentReader)
 	if err != nil {
 		return fmt.Errorf("open scorer: %w", err)
 	}
