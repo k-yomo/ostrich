@@ -1,8 +1,6 @@
 package reader
 
 import (
-	"fmt"
-
 	"github.com/k-yomo/ostrich/index"
 	"github.com/k-yomo/ostrich/schema"
 )
@@ -45,23 +43,6 @@ func NewSearcher(idx *index.Index, segmentReaders []*SegmentReader) *Searcher {
 		index:          idx,
 		segmentReaders: segmentReaders,
 	}
-}
-
-func Search[T any](searcher *Searcher, q Query, c Collector[T]) (T, error) {
-	var zeroT T
-	results := make([]T, 0, len(searcher.segmentReaders))
-	weight, err := q.Weight(searcher, false)
-	if err != nil {
-		return zeroT, fmt.Errorf("initialize weight: %w", err)
-	}
-	for i, segmentReader := range searcher.segmentReaders {
-		result, err := c.CollectSegment(weight, i, segmentReader)
-		if err != nil {
-			return zeroT, fmt.Errorf("collect segment: %w", err)
-		}
-		results = append(results, result)
-	}
-	return c.MergeResults(results), nil
 }
 
 func (s *Searcher) SegmentReaders() []*SegmentReader {

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"runtime"
 
 	"github.com/k-yomo/ostrich/analyzer"
 	"github.com/k-yomo/ostrich/collector"
@@ -85,7 +86,12 @@ func main() {
 	)
 
 	searcher := indexReader.Searcher()
-	tupleResult, err := reader.Search(searcher, q, tupleCollector)
+	tupleResult, err := reader.Search(
+		searcher,
+		q,
+		tupleCollector,
+		reader.SearchOptionConcurrent(runtime.GOMAXPROCS(0)),
+	)
 	if err != nil {
 		panic(err)
 	}

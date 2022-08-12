@@ -15,6 +15,7 @@ Full text search engine library written in Go with 1.18+ Generics, heavily inspi
 - Segment merge with LogMergePolicy
 - Mmap directory
 - Natural query language (e.g. "(go OR golang) AND (search or fts)")
+- Concurrent search
 - TF-IDF scoring (will be replaced with BM25)
 
 #### Supported field types:
