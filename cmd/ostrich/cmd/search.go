@@ -16,6 +16,7 @@ import (
 // newSearchCmd returns the command to search index
 func newSearchCmd(out io.Writer) *cobra.Command {
 	const flagNameLimit = "limit"
+	const flagNameCountOnly = "count-only"
 
 	command := &cobra.Command{
 		Use:     "search QUERY",
@@ -48,7 +49,7 @@ func newSearchCmd(out io.Writer) *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("parse query: %w", err)
 			}
-			hits, err := reader.Search(searcher, q, collector.NewTopDocsCollector(limit, 0))
+			hits, err := reader.Search(searcher, q, collector.NewTopScoreCollector(limit, 0))
 			if err != nil {
 				return fmt.Errorf("search: %w", err)
 			}
