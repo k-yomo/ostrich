@@ -25,6 +25,7 @@ Full text search engine library written in Go with 1.18+ Generics, heavily inspi
 ※ We'll support more and more types
 
 ## Example
+
 ```go
 package main
 
@@ -41,12 +42,12 @@ import (
 )
 
 func main() {
-	schemaBuilder := schema.NewBuilder()
+	indexSchema := schema.NewSchema()
 	analyzer.Register("en_stem", analyzer.NewEnglishAnalyzer())
-	phraseField := schemaBuilder.AddTextField("phrase", "en_stem")
-	descriptionField := schemaBuilder.AddTextField("description", "en_stem")
+	phraseField := indexSchema.AddTextField("phrase", "en_stem")
+	descriptionField := indexSchema.AddTextField("description", "en_stem")
 
-	idx, err := index.NewBuilder(schemaBuilder.Build()).OpenOrCreate("tmp")
+	idx, err := index.NewBuilder(indexSchema).OpenOrCreate("tmp")
 	if err != nil {
 		panic(err)
 	}
@@ -69,11 +70,11 @@ func main() {
 			},
 		},
 	}
-    indexWriter.AddDocument(doc)
+	indexWriter.AddDocument(doc)
 	if _, err := indexWriter.Commit(); err != nil {
 		panic(err)
 	}
-	
+
 	indexReader, err := reader.NewIndexReader(idx)
 	if err != nil {
 		panic(err)
@@ -95,7 +96,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	
+
 	hits := tupleResult.Left
 	count := tupleResult.Right
 	fmt.Println("total hit:", count)
