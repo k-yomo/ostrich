@@ -57,7 +57,7 @@ func Search[T any](searcher *Searcher, q Query, c Collector[T], opt ...SearchOpt
 		for i, segmentReader := range searcher.segmentReaders {
 			result, err := c.CollectSegment(weight, i, segmentReader)
 			if err != nil {
-				return nil, fmt.Errorf("collect segment %s: %w", segmentReader.SegmentID, err)
+				return zeroT, fmt.Errorf("collect segment %s: %w", segmentReader.SegmentID, err)
 			}
 			results = append(results, result)
 		}
