@@ -62,6 +62,9 @@ func NewIndexWriter(idx *index.Index, overallHeapBytes int) (*IndexWriter, error
 		}
 	})
 	b.HandlerLimit = threadNum
+	b.BundleCountThreshold = MaxOperationQueueSize
+	b.BundleByteThreshold = HeapSizeMin
+	b.BundleByteLimit = HeapSizeMax
 	b.BufferedByteLimit = overallHeapBytes
 
 	i.operationBatcher = b
