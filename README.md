@@ -4,11 +4,27 @@
 [![Test](https://github.com/k-yomo/ostrich/actions/workflows/test.yml/badge.svg)](https://github.com/k-yomo/ostrich/actions/workflows/test.yml)
 [![Go Report Card](https://goreportcard.com/badge/k-yomo/ostrich)](https://goreportcard.com/report/k-yomo/ostrich)
 
-Full text search engine library written in Go heavily inspired by Tantivy
+Full text search engine library written in Go with 1.18+ Generics, heavily inspired by Tantivy
 
 ※ This library is not production ready, don't use it in production.
 
-## example
+## Features
+- Full-text search
+- Configurable analyzer
+- Concurrent indexing in batch
+- Segment merge with LogMergePolicy
+- Mmap directory
+- Natural query language (e.g. "(go OR golang) AND (search or fts)")
+- TF-IDF scoring (will be replaced with BM25)
+
+#### Supported field types:
+  - Text
+#### Supported query types:
+  - Term, Conjunction, Disjunction, Boolean
+
+※ We'll support more and more types
+
+## Example
 ```go
 package main
 
@@ -41,8 +57,8 @@ func main() {
 	}
 	defer indexWriter.Close()
 
-	docs := []*schema.Document{
-		{FieldValues: []*schema.FieldValue{
+	doc := &schema.Document{
+		FieldValues: []*schema.FieldValue{
 			{
 				FieldID: phraseField,
 				Value:   "When the Rubber Hits the Road",
@@ -51,15 +67,13 @@ func main() {
 				FieldID: descriptionField,
 				Value:   "When something is about to begin, get serious, or put to the test.",
 			},
-		}},
+		},
 	}
-
-	for _, doc := range docs {
-		indexWriter.AddDocument(doc)
-	}
+    indexWriter.AddDocument(doc)
 	if _, err := indexWriter.Commit(); err != nil {
 		panic(err)
 	}
+	
 	indexReader, err := reader.NewIndexReader(idx)
 	if err != nil {
 		panic(err)
