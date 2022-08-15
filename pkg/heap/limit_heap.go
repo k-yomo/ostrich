@@ -5,17 +5,18 @@ type LimitHeap[T any] struct {
 	*Heap[T]
 }
 
-func NewLimitHeap[T any](limit int, comp func(a, b T) bool) *LimitHeap[T] {
-	return &LimitHeap[T]{limit: limit, Heap: NewHeap(comp)}
+// NewLimitHeap initializes min-heap with the given limit.
+func NewLimitHeap[T any](limit int, less func(a, b T) bool) *LimitHeap[T] {
+	return &LimitHeap[T]{limit: limit, Heap: NewHeap(less)}
 }
 
 func (l *LimitHeap[T]) Push(v T) {
 	if l.Len() < l.limit {
 		l.Heap.Push(v)
 	} else {
-		if last := l.Peek(); l.comp(v, *last) {
-			l.Heap.Push(v)
-			_ = l.Heap.Pop()
+		if head := l.Peek(); l.less(*head, v) {
+			*head = v
+			l.Heap.down()
 		}
 	}
 }

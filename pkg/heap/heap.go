@@ -2,11 +2,12 @@ package heap
 
 type Heap[T any] struct {
 	data []T
-	comp func(a, b T) bool
+	less func(a, b T) bool
 }
 
-func NewHeap[T any](comp func(a, b T) bool) *Heap[T] {
-	return &Heap[T]{comp: comp}
+// NewHeap initializes new min-heap with given comparing function
+func NewHeap[T any](less func(a, b T) bool) *Heap[T] {
+	return &Heap[T]{less: less}
 }
 
 func (h *Heap[T]) Len() int { return len(h.data) }
@@ -28,20 +29,15 @@ func (h *Heap[T]) Pop() T {
 }
 
 func (h *Heap[T]) Peek() *T {
-	return &(h.data[h.Len()-1])
+	return &(h.data[0])
 }
 
-func (h *Heap[T]) TopN(n int, offset int) []T {
-	values := make([]T, 0, h.Len())
-	for i := 0; i < n; i++ {
-		if h.Len() == 0 {
-			break
-		}
-		v := h.Pop()
-		if i < offset {
-			continue
-		}
-		values = append(values, v)
+// ToArray map heap to array in ascending order
+// this will pop all the values from the heap
+func (h *Heap[T]) ToArray() []T {
+	values := make([]T, 0, len(h.data))
+	for h.Len() > 0 {
+		values = append([]T{h.Pop()}, values...)
 	}
 	return values
 }
@@ -50,14 +46,14 @@ func (h *Heap[T]) swap(i, j int) {
 	h.data[i], h.data[j] = h.data[j], h.data[i]
 }
 
-func (h *Heap[T]) up(jj int) {
+func (h *Heap[T]) up(j int) {
 	for {
-		i := parent(jj)
-		if i == jj || !h.comp(h.data[jj], h.data[i]) {
+		i := parent(j)
+		if i == j || !h.less(h.data[j], h.data[i]) {
 			break
 		}
-		h.swap(i, jj)
-		jj = i
+		h.swap(i, j)
+		j = i
 	}
 }
 
@@ -71,10 +67,10 @@ func (h *Heap[T]) down() {
 		}
 		j := j1
 		j2 := right(i1)
-		if j2 < n && h.comp(h.data[j2], h.data[j1]) {
+		if j2 < n && h.less(h.data[j2], h.data[j1]) {
 			j = j2
 		}
-		if !h.comp(h.data[j], h.data[i1]) {
+		if !h.less(h.data[j], h.data[i1]) {
 			break
 		}
 		h.swap(i1, j)

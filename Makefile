@@ -2,7 +2,8 @@
 
 .PHONY: test
 test: ## Run test
-	go test -race -coverprofile=coverage.out ./...
+	go install gotest.tools/gotestsum@latest
+	gotestsum -- -race -coverprofile=coverage.out ./...
 
 .PHONY: cover
 cover: test ## Run test with showing coverage
