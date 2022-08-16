@@ -8,3 +8,10 @@ const (
 	SegmentComponentStore
 	SegmentComponentDelete
 )
+
+var segmentComponents = []SegmentComponent{
+	SegmentComponentPostings,
+	SegmentComponentTerms,
+	SegmentComponentStore,
+	// SegmentComponentDelete,
+}

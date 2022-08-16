@@ -15,4 +15,5 @@ type Directory interface {
 	OpenWrite(path string) (WriteCloseSyncer, error)
 	AtomicWrite(path string, data []byte) error
 	Exists(path string) (bool, error)
+	Delete(path string) error
 }

@@ -88,6 +88,48 @@ func (m *ManagedDirectory) AtomicWrite(path string, data []byte) error {
 func (m *ManagedDirectory) Exists(path string) (bool, error) {
 	return m.directory.Exists(path)
 }
+func (m *ManagedDirectory) Delete(path string) error {
+	return m.directory.Delete(path)
+}
+
+func (m *ManagedDirectory) GarbageCollect(livingFilePaths []string) error {
+	m.MetaInformation.Lock()
+	defer m.MetaInformation.Unlock()
+
+	livingFileMap := make(map[string]struct{}, len(livingFilePaths))
+	for _, livingFile := range livingFilePaths {
+		livingFileMap[livingFile] = struct{}{}
+	}
+
+	var filesToDelete []string
+	for _, managedPath := range m.MetaInformation.ManagedPaths {
+		if _, ok := livingFileMap[managedPath]; !ok {
+			filesToDelete = append(filesToDelete, managedPath)
+		}
+	}
+
+	var deletedFiles, failedFiles []string
+	for _, fileToDelete := range filesToDelete {
+		if err := m.Delete(fileToDelete); err != nil {
+			failedFiles = append(failedFiles, fileToDelete)
+			continue
+		}
+		deletedFiles = append(deletedFiles, fileToDelete)
+	}
+
+	if len(deletedFiles) == 0 {
+		return nil
+	}
+
+	for _, deletedFile := range deletedFiles {
+		m.MetaInformation.RemovePath(deletedFile)
+	}
+	if err := m.saveManagedPaths(); err != nil {
+		return err
+	}
+
+	return nil
+}
 
 func (m *ManagedDirectory) registerFileAsManaged(path string) error {
 	if !isManageableFile(path) {
@@ -101,16 +143,22 @@ func (m *ManagedDirectory) registerFileAsManaged(path string) error {
 		return nil
 	}
 
+	if err := m.saveManagedPaths(); err != nil {
+		m.MetaInformation.RemovePath(path)
+		return err
+	}
+
+	return nil
+}
+
+func (m *ManagedDirectory) saveManagedPaths() error {
 	managedPathsJSON, err := json.Marshal(m.MetaInformation.ManagedPaths)
 	if err != nil {
-		m.MetaInformation.RemovePath(path)
 		return fmt.Errorf("marshal managed paths: %w", err)
 	}
 	if err := m.directory.AtomicWrite(managedFilePath, managedPathsJSON); err != nil {
-		m.MetaInformation.RemovePath(path)
 		return fmt.Errorf("write managed paths: %w", err)
 	}
-
 	return nil
 }
 

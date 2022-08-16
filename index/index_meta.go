@@ -7,10 +7,11 @@ import (
 
 	"github.com/k-yomo/ostrich/directory"
 	"github.com/k-yomo/ostrich/internal/opstamp"
+	"github.com/k-yomo/ostrich/pkg/list"
 	"github.com/k-yomo/ostrich/schema"
 )
 
-const metaFileName = "meta.json"
+const MetaFileName = "meta.json"
 
 type IndexMeta struct {
 	Segments []*SegmentMeta `json:"segments"`
@@ -85,16 +86,30 @@ func (i *SegmentMetaInventory) NewSegmentMeta(segmentID SegmentID, maxDoc schema
 	return segmentMeta
 }
 
+func (i *SegmentMetaInventory) RemoveSegments(segmentIDs []SegmentID) {
+
+	i.mu.Lock()
+	defer i.mu.Unlock()
+
+	newInventory := make([]*SegmentMeta, 0, len(i.inventory))
+	for _, segmentMeta := range i.inventory {
+		if !list.Contains(segmentIDs, segmentMeta.SegmentID) {
+			newInventory = append(newInventory, segmentMeta)
+		}
+	}
+	i.inventory = newInventory
+}
+
 func SaveMeta(meta *IndexMeta, dir directory.Directory) error {
 	metaJSON, err := json.Marshal(meta)
 	if err != nil {
 		return fmt.Errorf("marshal index meta: %w", err)
 	}
-	return dir.AtomicWrite(metaFileName, metaJSON)
+	return dir.AtomicWrite(MetaFileName, metaJSON)
 }
 
 func LoadMeta(directory directory.Directory, inventory *SegmentMetaInventory) (*IndexMeta, error) {
-	metaData, err := directory.AtomicRead(metaFileName)
+	metaData, err := directory.AtomicRead(MetaFileName)
 	if err != nil {
 		return nil, err
 	}
@@ -102,6 +117,12 @@ func LoadMeta(directory directory.Directory, inventory *SegmentMetaInventory) (*
 	if err := json.Unmarshal(metaData, &indexMeta); err != nil {
 		return nil, err
 	}
+
+	inventory.mu.Lock()
+	for _, segmentMeta := range indexMeta.Segments {
+		inventory.inventory = append(inventory.inventory, segmentMeta)
+	}
+	inventory.mu.Unlock()
 
 	return &indexMeta, nil
 }

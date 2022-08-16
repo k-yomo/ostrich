@@ -72,6 +72,14 @@ func (m *memoryDirectory) Exists(path string) (bool, error) {
 	return ok, nil
 }
 
+func (m *memoryDirectory) Delete(path string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	delete(m.pathBytesMap, path)
+	return nil
+}
+
 type memoryIO struct {
 	*bytes.Reader
 	mu  *sync.RWMutex
