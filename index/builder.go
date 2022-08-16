@@ -21,7 +21,7 @@ func (b *Builder) CreateInDir(path string) (*Index, error) {
 	if err != nil {
 		return nil, fmt.Errorf("open mmap directory: %v", err)
 	}
-	exists, err := mmapDirectory.Exists(metaFileName)
+	exists, err := mmapDirectory.Exists(MetaFileName)
 	if err != nil {
 		return nil, err
 	}
@@ -37,7 +37,7 @@ func (b *Builder) OpenOrCreate(path string) (*Index, error) {
 	if err != nil {
 		return nil, fmt.Errorf("open mmap directory: %v", err)
 	}
-	exists, err := mmapDirectory.Exists(metaFileName)
+	exists, err := mmapDirectory.Exists(MetaFileName)
 	if err != nil {
 		return nil, err
 	}

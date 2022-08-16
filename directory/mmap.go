@@ -93,6 +93,15 @@ func (m *mmapDirectory) Exists(path string) (bool, error) {
 	return true, nil
 }
 
+func (m *mmapDirectory) Delete(path string) error {
+	// TODO: return not found error if the file does not exist
+	err := os.Remove(m.buildPath(path))
+	if err != nil {
+		return fmt.Errorf("delete '%s': %w", path, err)
+	}
+	return nil
+}
+
 func (m *mmapDirectory) buildPath(path string) string {
 	return fmt.Sprintf("%s/%s", m.rootPath, path)
 }

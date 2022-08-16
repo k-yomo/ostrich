@@ -117,6 +117,7 @@ func (s *SegmentUpdater) startMerge(operation *MergeOperation) (*index.SegmentMe
 			return nil, err
 		}
 	}
+	s.index.RemoveSegments(operation.segmentIDs)
 
 	newSegmentIDsInMerge := make([]index.SegmentID, 0, len(s.segmentIDsInMerge))
 	processedSegmentIDMap := make(map[index.SegmentID]struct{})
@@ -132,7 +133,15 @@ func (s *SegmentUpdater) startMerge(operation *MergeOperation) (*index.SegmentMe
 	s.Unlock()
 
 	s.considerMergeOptions()
+
+	if err := s.garbageCollectFiles(); err != nil {
+		// logging?
+	}
 	return mergedSegmentEntry.meta, nil
+}
+
+func (s *SegmentUpdater) garbageCollectFiles() error {
+	return s.index.Directory().GarbageCollect(append(s.index.ListSegmentFilePaths(), index.MetaFileName))
 }
 
 func merge(idx *index.Index, segmentEntries []*SegmentEntry, targetOpStamp opstamp.OpStamp) (*SegmentEntry, error) {

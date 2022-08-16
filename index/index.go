@@ -8,14 +8,14 @@ import (
 )
 
 type Index struct {
-	directory directory.Directory
+	directory *directory.ManagedDirectory
 	schema    *schema.Schema
 	inventory *SegmentMetaInventory
 
 	mu *sync.Mutex
 }
 
-func NewIndexFromMeta(directory directory.Directory, meta *IndexMeta, inventory *SegmentMetaInventory) *Index {
+func NewIndexFromMeta(directory *directory.ManagedDirectory, meta *IndexMeta, inventory *SegmentMetaInventory) *Index {
 	return &Index{
 		directory: directory,
 		schema:    meta.Schema,
@@ -30,7 +30,7 @@ func OpenIndex(dir directory.Directory) (*Index, error) {
 		return nil, err
 	}
 	inventory := &SegmentMetaInventory{}
-	meta, err := LoadMeta(dir, inventory)
+	meta, err := LoadMeta(managedDirectory, inventory)
 	if err != nil {
 		return nil, err
 	}
@@ -62,14 +62,32 @@ func (i *Index) NewSegment() *Segment {
 	return newSegment(i, segmentMeta)
 }
 
+func (i *Index) RemoveSegments(segmentIDs []SegmentID) {
+	i.inventory.RemoveSegments(segmentIDs)
+}
+
 func (i *Index) Segment(segmentMeta *SegmentMeta) *Segment {
 	return newSegment(i, segmentMeta)
 }
 
-func (i *Index) Directory() directory.Directory {
+func (i *Index) Directory() *directory.ManagedDirectory {
 	return i.directory
 }
 
 func (i *Index) Schema() *schema.Schema {
 	return i.schema
+}
+
+func (i *Index) ListSegmentFilePaths() []string {
+	var segmentFilePaths []string
+	i.inventory.mu.Lock()
+	segmentMetas := i.inventory.inventory
+	i.inventory.mu.Unlock()
+
+	for _, segmentMeta := range segmentMetas {
+		for _, component := range segmentComponents {
+			segmentFilePaths = append(segmentFilePaths, segmentMeta.RelativePath(component))
+		}
+	}
+	return segmentFilePaths
 }
