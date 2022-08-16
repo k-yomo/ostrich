@@ -8,8 +8,8 @@ import (
 	"unsafe"
 
 	"github.com/k-yomo/go-batch"
-
 	"github.com/k-yomo/ostrich/index"
+	"github.com/k-yomo/ostrich/internal/logging"
 	"github.com/k-yomo/ostrich/internal/opstamp"
 	"github.com/k-yomo/ostrich/schema"
 )
@@ -117,6 +117,8 @@ func (i *IndexWriter) AddDocument(document *schema.Document) *AddDocumentResult 
 }
 
 func (i *IndexWriter) indexDocuments(operations []*AddOperation) error {
+	logging.Logger().Debug("flush segment", "docNum", len(operations))
+
 	segment := i.index.NewSegment()
 	indexSchema := segment.Schema()
 	segmentWriter, err := newSegmentWriter(segment, indexSchema)
@@ -146,7 +148,7 @@ func (i *IndexWriter) Commit() (opstamp.OpStamp, error) {
 	if err := i.segmentUpdater.Commit(commitOpstamp); err != nil {
 		return 0, err
 	}
-	go i.segmentUpdater.considerMergeOptions()
+	i.segmentUpdater.considerMergeOptions()
 	return commitOpstamp, nil
 }
 

@@ -2,11 +2,11 @@ package indexer
 
 import (
 	"fmt"
-	"log"
 	"sort"
 	"sync"
 
 	"github.com/k-yomo/ostrich/index"
+	"github.com/k-yomo/ostrich/internal/logging"
 	"github.com/k-yomo/ostrich/internal/opstamp"
 )
 
@@ -94,7 +94,7 @@ func (s *SegmentUpdater) considerMergeOptions() {
 
 	for _, mergeOperation := range mergeOperations {
 		if _, err := s.startMerge(mergeOperation); err != nil {
-			log.Printf("failed to merge: %v\n", err)
+			logging.Logger().Debug("merge failed", "error", err)
 		}
 	}
 }
@@ -104,6 +104,8 @@ func (s *SegmentUpdater) mergeableSegments() ([]*index.SegmentMeta, []*index.Seg
 }
 
 func (s *SegmentUpdater) startMerge(operation *MergeOperation) (*index.SegmentMeta, error) {
+	logging.Logger().Debug("start merge", "segments", operation.segmentIDs)
+
 	segmentEntries := s.segmentManager.segmentEntriesForMerge(operation.segmentIDs)
 	mergedSegmentEntry, err := merge(s.index, segmentEntries, operation.targetOpStamp)
 	if err != nil {
@@ -111,6 +113,7 @@ func (s *SegmentUpdater) startMerge(operation *MergeOperation) (*index.SegmentMe
 	}
 
 	s.Lock()
+	logging.Logger().Debug("end merge", "mergeSegmentMeta", mergedSegmentEntry.meta)
 	segmentStatus := s.segmentManager.endMerge(operation.segmentIDs, mergedSegmentEntry)
 	if segmentStatus == SegmentStatusCommitted {
 		if err := s.saveMetas(s.activeMeta.Opstamp); err != nil {
@@ -135,12 +138,14 @@ func (s *SegmentUpdater) startMerge(operation *MergeOperation) (*index.SegmentMe
 	s.considerMergeOptions()
 
 	if err := s.garbageCollectFiles(); err != nil {
+		logging.Logger().Debug("garbage collection failed", "error", err)
 		// logging?
 	}
 	return mergedSegmentEntry.meta, nil
 }
 
 func (s *SegmentUpdater) garbageCollectFiles() error {
+	logging.Logger().Debug("start garbage collection")
 	return s.index.Directory().GarbageCollect(append(s.index.ListSegmentFilePaths(), index.MetaFileName))
 }
 

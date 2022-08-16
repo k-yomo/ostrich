@@ -7,6 +7,8 @@ import (
 	"io/fs"
 	"strings"
 	"sync"
+
+	"github.com/k-yomo/ostrich/internal/logging"
 )
 
 const managedFilePath = ".managed.json"
@@ -114,6 +116,7 @@ func (m *ManagedDirectory) GarbageCollect(livingFilePaths []string) error {
 			failedFiles = append(failedFiles, fileToDelete)
 			continue
 		}
+		logging.Logger().Debug("deleted", "path", fileToDelete)
 		deletedFiles = append(deletedFiles, fileToDelete)
 	}
 
