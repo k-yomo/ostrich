@@ -15,11 +15,9 @@ import (
 )
 
 const (
-	MaxThreadNum              = 8
-	MarginInBytes         int = 1e6 // 1MB
-	HeapSizeMin               = MarginInBytes * 3
-	HeapSizeMax               = math.MaxUint32 - MarginInBytes
-	MaxOperationQueueSize     = 10000
+	MaxThreadNum         = 8
+	BundleByteThreshold  = 3e6     // 3MB
+	BundleCountThreshold = 100_000 // we basically flush by memory usage
 )
 
 type IndexWriter struct {
@@ -54,17 +52,18 @@ func NewIndexWriter(idx *index.Index, overallHeapBytes int) (*IndexWriter, error
 		committedOpstamp: currentOpstamp,
 	}
 
-	threadNum := int(math.Min(float64(runtime.GOMAXPROCS(0)), 8))
+	threadNum := int(math.Min(float64(runtime.GOMAXPROCS(0)), MaxThreadNum))
 	b := batch.New(func(operations []*AddOperation) {
 		err := i.indexDocuments(operations)
 		for _, op := range operations {
 			op.result(err)
 		}
 	})
+	bytesPerThread := overallHeapBytes / threadNum
 	b.HandlerLimit = threadNum
-	b.BundleCountThreshold = MaxOperationQueueSize
-	b.BundleByteThreshold = HeapSizeMin
-	b.BundleByteLimit = HeapSizeMax
+	b.BundleCountThreshold = BundleCountThreshold
+	b.BundleByteThreshold = BundleByteThreshold
+	b.BundleByteLimit = bytesPerThread
 	b.BufferedByteLimit = overallHeapBytes
 
 	i.operationBatcher = b
