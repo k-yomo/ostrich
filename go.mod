@@ -1,6 +1,6 @@
 module github.com/k-yomo/ostrich
 
-go 1.18
+go 1.19
 
 require (
 	github.com/edsrzf/mmap-go v1.1.0
