@@ -5,8 +5,7 @@ import "sync"
 type Schema struct {
 	mu sync.RWMutex
 
-	Fields   []*FieldEntry `json:"fields"`
-	fieldMap map[string]*FieldEntry
+	Fields []*FieldEntry `json:"fields"`
 }
 
 func NewSchema() *Schema {
@@ -22,6 +21,15 @@ func (s *Schema) AddTextField(fieldName string, analyzerName string) FieldID {
 
 func (s *Schema) FieldEntry(fieldID FieldID) *FieldEntry {
 	return s.Fields[fieldID]
+}
+
+func (s *Schema) FieldByName(name string) *FieldEntry {
+	for _, field := range s.Fields {
+		if field.Name == name {
+			return field
+		}
+	}
+	return nil
 }
 
 func (s *Schema) FieldIDs() []FieldID {
