@@ -127,7 +127,7 @@ func (b *BooleanWeight) ForEachPruning(threshold float64, segmentReader *reader.
 	}
 	if scorerWrapper.IsTermUnion() {
 		// TODO: use specialized method to do WAND
-		return ForEachPruning(scorerWrapper.Scorer(), threshold, callback)
+		return blockWand(scorerWrapper.termUnion, threshold, callback)
 	} else {
 		return ForEachPruning(scorerWrapper.other, threshold, callback)
 	}

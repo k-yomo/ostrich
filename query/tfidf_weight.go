@@ -17,3 +17,7 @@ func NewTFIDFWeight(totalDocNum uint64, documentFrequency int) *TfIDFWeight {
 func (t *TfIDFWeight) Score(termFrequency float64) float64 {
 	return termFrequency * t.idf
 }
+
+func (t *TfIDFWeight) MaxScore() float64 {
+	return t.Score(2_013_265_944)
+}

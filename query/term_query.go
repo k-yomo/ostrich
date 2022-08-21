@@ -104,3 +104,7 @@ func (a *TermScorer) TermFreq() uint64 {
 func (a *TermScorer) Score() float64 {
 	return a.similarityWeight.Score(float64(a.TermFreq()))
 }
+
+func (a *TermScorer) MaxScore() float64 {
+	return a.similarityWeight.MaxScore()
+}
