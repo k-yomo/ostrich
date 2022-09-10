@@ -119,9 +119,7 @@ func LoadMeta(directory directory.Directory, inventory *SegmentMetaInventory) (*
 	}
 
 	inventory.mu.Lock()
-	for _, segmentMeta := range indexMeta.Segments {
-		inventory.inventory = append(inventory.inventory, segmentMeta)
-	}
+	inventory.inventory = append(inventory.inventory, indexMeta.Segments...)
 	inventory.mu.Unlock()
 
 	return &indexMeta, nil

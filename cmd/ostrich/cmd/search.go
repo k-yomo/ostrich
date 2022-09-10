@@ -16,7 +16,6 @@ import (
 // newSearchCmd returns the command to search index
 func newSearchCmd(out io.Writer) *cobra.Command {
 	const flagNameLimit = "limit"
-	const flagNameCountOnly = "count-only"
 
 	command := &cobra.Command{
 		Use:     "search QUERY",
@@ -56,9 +55,9 @@ func newSearchCmd(out io.Writer) *cobra.Command {
 			elapsedTime := time.Since(start).String()
 
 			for _, hit := range hits {
-				out.Write([]byte(fmt.Sprintf("docAddress: %+v, score: %.6f\n", hit.DocAddress, hit.Score)))
+				_, _ = out.Write([]byte(fmt.Sprintf("docAddress: %+v, score: %.6f\n", hit.DocAddress, hit.Score)))
 			}
-			out.Write([]byte(fmt.Sprintf("elapsed time: %s\n", elapsedTime)))
+			_, _ = out.Write([]byte(fmt.Sprintf("elapsed time: %s\n", elapsedTime)))
 			return nil
 		},
 	}

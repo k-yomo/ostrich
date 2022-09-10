@@ -110,10 +110,9 @@ func (m *ManagedDirectory) GarbageCollect(livingFilePaths []string) error {
 		}
 	}
 
-	var deletedFiles, failedFiles []string
+	var deletedFiles []string
 	for _, fileToDelete := range filesToDelete {
 		if err := m.Delete(fileToDelete); err != nil {
-			failedFiles = append(failedFiles, fileToDelete)
 			continue
 		}
 		logging.Logger().Debug("deleted", "path", fileToDelete)
