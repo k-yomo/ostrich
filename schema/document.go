@@ -21,7 +21,7 @@ func (d *Document) SortedFieldValues() []*FieldAndFieldValues {
 	if len(d.FieldValues) == 0 {
 		return nil
 	}
-	fieldValues := append(d.FieldValues)
+	fieldValues := d.FieldValues
 	sort.Slice(fieldValues, func(i, j int) bool {
 		return fieldValues[i].FieldID < fieldValues[j].FieldID
 	})

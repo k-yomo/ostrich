@@ -90,7 +90,11 @@ func Test_memoryDirectory_OpenWrite(t *testing.T) {
 				return
 			}
 			if !tt.wantErr {
-				got.Write(tt.writeBytes)
+				_, err := got.Write(tt.writeBytes)
+				if err != nil {
+					t.Errorf("got.Write() error = %v, wantErr %v", err, tt.wantErr)
+					return
+				}
 				gotBytes := tt.memoryDirectory.pathBytesMap[tt.args.path]
 				if !reflect.DeepEqual(gotBytes, tt.writeBytes) {
 					t.Errorf("OpenWrite(), Write() got = %v, want %v", gotBytes, tt.writeBytes)

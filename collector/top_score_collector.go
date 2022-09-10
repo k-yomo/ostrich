@@ -22,7 +22,7 @@ type TopScoreResult struct {
 
 func (t *TopScoreResult) Less(x *TopScoreResult) bool {
 	if t.Score == x.Score {
-		return t.DocAddress.DocID < t.DocAddress.DocID
+		return t.DocAddress.DocID < x.DocAddress.DocID
 	}
 	return t.Score < x.Score
 }
@@ -38,6 +38,7 @@ func (t *TopScoreCollector) CollectSegment(w reader.Weight, segmentOrd int, segm
 	heapLimit := t.limit + t.offset
 	topCollector := heap.NewLimitHeap[*TopScoreResult](heapLimit, func(a, b *TopScoreResult) bool {
 		if a.Score == b.Score {
+			return a.DocAddress.DocID < b.DocAddress.DocID
 		}
 		return a.Score < b.Score
 	})
