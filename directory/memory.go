@@ -30,6 +30,7 @@ func (m *memoryDirectory) OpenRead(path string) (*FileSlice, error) {
 	if !ok {
 		return nil, fmt.Errorf("path '%s' does not exist", path)
 	}
+	fmt.Println(len(b))
 	noopCloser := func() error { return nil }
 	return NewFileSlice(bytes.NewReader(b), noopCloser), nil
 }
