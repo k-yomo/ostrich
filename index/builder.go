@@ -32,6 +32,11 @@ func (b *Builder) CreateInDir(path string) (*Index, error) {
 	}
 }
 
+func (b *Builder) CreateInMemory() (*Index, error) {
+	memoryDirectory := directory.NewMemoryDirectory()
+	return b.create(memoryDirectory)
+}
+
 func (b *Builder) OpenOrCreate(path string) (*Index, error) {
 	mmapDirectory, err := directory.NewMMapDirectory(path)
 	if err != nil {

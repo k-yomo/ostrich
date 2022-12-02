@@ -30,7 +30,6 @@ func (m *memoryDirectory) OpenRead(path string) (*FileSlice, error) {
 	if !ok {
 		return nil, fmt.Errorf("path '%s' does not exist", path)
 	}
-	fmt.Println(len(b))
 	noopCloser := func() error { return nil }
 	return NewFileSlice(bytes.NewReader(b), noopCloser), nil
 }
@@ -55,7 +54,7 @@ func (m *memoryDirectory) OpenWrite(path string) (WriteCloseSyncer, error) {
 	set := func(b []byte) {
 		m.mu.Lock()
 		defer m.mu.Unlock()
-		m.pathBytesMap[path] = b
+		m.pathBytesMap[path] = append(m.pathBytesMap[path], b...)
 	}
 	return newMemoryBytes(b, m.mu, set), nil
 }
