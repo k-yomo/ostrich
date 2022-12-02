@@ -120,7 +120,7 @@ func Test_memoryDirectory_Delete(t *testing.T) {
 			name: "delete path",
 			memoryDirectory: func() *memoryDirectory {
 				m := NewMemoryDirectory()
-				m.AtomicWrite("test", []byte{})
+				_ = m.AtomicWrite("test", []byte{})
 				return m
 			}(),
 			args: args{path: "test"},
