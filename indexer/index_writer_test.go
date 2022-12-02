@@ -1,6 +1,9 @@
 package indexer
 
 import (
+	"reflect"
+	"testing"
+
 	"github.com/k-yomo/ostrich/analyzer"
 	"github.com/k-yomo/ostrich/collector"
 	"github.com/k-yomo/ostrich/index"
@@ -8,8 +11,6 @@ import (
 	"github.com/k-yomo/ostrich/query"
 	"github.com/k-yomo/ostrich/reader"
 	"github.com/k-yomo/ostrich/schema"
-	"reflect"
-	"testing"
 )
 
 func TestIndexWriter_AddDocument(t *testing.T) {
