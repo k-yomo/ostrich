@@ -73,7 +73,7 @@ func Test_memoryDirectory_OpenWrite(t *testing.T) {
 		wantErr         bool
 	}{
 		{
-			name:            "writes to the path",
+			name:            "writes size the path",
 			memoryDirectory: NewMemoryDirectory(),
 			writeBytes:      []byte("abc"),
 			args: args{

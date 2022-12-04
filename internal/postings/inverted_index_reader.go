@@ -29,7 +29,7 @@ func (p *InvertedIndexReader) ReadPostings(term string) (*PostingsReader, error)
 	if !ok {
 		return &PostingsReader{}, nil
 	}
-	return NewPostingsReader(p.postingsFile.Slice(termInfo.PostingsRange.From, termInfo.PostingsRange.To))
+	return NewPostingsReader(p.postingsFile.Slice(termInfo.PostingsRange))
 }
 
 func (p *InvertedIndexReader) DocFreq(term string) int {
