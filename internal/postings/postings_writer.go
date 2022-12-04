@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/k-yomo/ostrich/internal/termdict"
+	"github.com/k-yomo/ostrich/pkg/xrange"
 
 	"github.com/k-yomo/ostrich/schema"
 )
@@ -105,11 +106,11 @@ func (s *SpecializedPostingsWriter) Serialize(serializer *InvertedIndexSerialize
 		footer.Write(b)
 
 		from := bytesOffset + len(buf)
-		to := from + b.Len()
+		to := from + b.Len() - 1
 		serializer.termsWrite.AddTermInfo(s.fieldID, &termdict.TermInfo{
 			Term:    term,
 			DocFreq: len(postingList),
-			PostingsRange: termdict.Range{
+			PostingsRange: xrange.Range{
 				From: from,
 				To:   to,
 			},

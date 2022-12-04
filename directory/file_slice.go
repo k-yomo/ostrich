@@ -3,15 +3,22 @@ package directory
 import (
 	"fmt"
 	"io"
+
+	"github.com/k-yomo/ostrich/pkg/xrange"
 )
 
-type FileHandle interface {
+type Reader interface {
+	io.Reader
 	io.ReaderAt
+}
+
+type FileHandle interface {
+	Reader
 	Len() int
 }
 
 type FileSlice struct {
-	data   io.ReaderAt
+	data   Reader
 	siz    int
 	closer func() error
 }
@@ -24,18 +31,18 @@ func NewFileSlice(data FileHandle, closer func() error) *FileSlice {
 	}
 }
 
-func (f *FileSlice) Slice(from, to int) *FileSlice {
+func (f *FileSlice) Slice(r xrange.Range) *FileSlice {
 	return &FileSlice{
-		data: io.NewSectionReader(f.data, int64(from), int64(to-from)),
-		siz:  to - from,
+		data: io.NewSectionReader(f.data, int64(r.From), int64(r.Len())),
+		siz:  r.Len(),
 		closer: func() error {
 			panic("Close is called for child file slice, only root file slice can be closed")
 		},
 	}
 }
 
-func (f *FileSlice) Read(from, to int) ([]byte, error) {
-	buf := make([]byte, to-from)
+func (f *FileSlice) Read(from, size int) ([]byte, error) {
+	buf := make([]byte, size)
 	if _, err := f.data.ReadAt(buf, int64(from)); err != nil {
 		return nil, fmt.Errorf("read data: %w", err)
 	}
@@ -46,37 +53,12 @@ func (f *FileSlice) Len() int {
 	return f.siz
 }
 
-func (f *FileSlice) Reader() *DataReader {
-	return &DataReader{
-		data: f,
-	}
+func (f *FileSlice) Reader() io.Reader {
+	return f.data
 }
 
 // Close closes data file
 // Close must be called only for the top level file slice, and must not for the child sliced one.
 func (f *FileSlice) Close() error {
 	return f.closer()
-}
-
-type DataReader struct {
-	data *FileSlice
-	n    int
-}
-
-func (d *DataReader) Read(p []byte) (n int, err error) {
-	if d.n >= d.data.Len() {
-		return 0, io.EOF
-	}
-	from := d.n
-	to := d.n + len(p)
-	if to > d.data.Len() {
-		to = d.data.Len()
-	}
-	data, err := d.data.Read(from, to)
-	if err != nil {
-		return 0, err
-	}
-	copy(p, data)
-	d.n = to
-	return to - from, nil
 }
